@@ -6,19 +6,19 @@ language:
       search-text-placeholder: Search
 
 website:
-  title: Solutions Hub
+  title: Concert Operate for Batch Processing
   favicon: images/bee.png
   page-navigation: true
-  search: 
+  search:
     type: textbox
     show-item-context: true
     location: navbar
   navbar:
     pinned: true
     logo: images/IBMlogo.png
-    right: 
+    right:
       - icon: github
-        href: https://github.com/ibm-client-engineering/solution-template-quarto
+        href: https://github.com/ibm-fsm/solution-concert-operate-batch
         target: "_blank"
       - icon: linkedin
         menu:
@@ -40,18 +40,16 @@ website:
           contents:
           - text: Prepare
             href: src/solution_overview/prepare.qmd
-          - text: Environment 
+          - text: Environment
             href: src/solution_overview/environment.qmd
           - text: Troubleshooting
             href: src/solution_overview/troubleshooting.qmd
-        - section: Implementation Methodology
+        - section: Implementation
           contents:
-          - text: Step One
-            href: src/implementation_methodology/stepone-imp.qmd
-          - text: Step Two
-            href: src/implementation_methodology/steptwo-imp.qmd
-          - text: Step Three
-            href: src/implementation_methodology/stepthree-imp.qmd
+          - text: Install Concert Operate
+            href: src/implementation_methodology/install.qmd
+          - text: Configure Concert Operate
+            href: src/implementation_methodology/configure.qmd
         - text: Key Takeaways
           href: src/key-takeaway.qmd
 

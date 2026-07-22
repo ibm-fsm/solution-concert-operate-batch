@@ -1,12 +1,37 @@
 ---
-title: "Step Two"
+title: "Environment"
 format: html
 ---
 
-### Step Two Solution
+### Target Environment
 
-Phasellus at risus egestas, ultricies tortor efficitur, auctor augue. Suspendisse finibus maximus dui nec condimentum. Proin fringilla efficitur vehicula. Suspendisse sem lacus, iaculis quis erat et, facilisis sagittis est. Sed sapien justo, condimentum vitae aliquet sed, faucibus at ex. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Fusce placerat ante eget diam tincidunt, vitae tincidunt sapien malesuada. Nullam ullamcorper justo eros. Duis ultricies aliquam dui, id aliquam lorem congue vitae. Ut porttitor, tellus eu dignissim semper, turpis nunc cursus libero, sed placerat est dui non enim.
+Concert Operate is deployed on a self-hosted **OpenShift Container Platform (OCP)** cluster.
+The cluster is dedicated to the Concert Operate workload and provisioned with the following
+general characteristics:
 
-Vestibulum libero dolor, vehicula vitae risus non, consequat gravida neque. Maecenas a posuere sem. Quisque dignissim porta pretium. Nam mattis lacus commodo lobortis consequat. Vestibulum at massa a quam egestas accumsan. Fusce ac neque eu libero maximus aliquet id quis metus. In sodales neque ut turpis iaculis vehicula. Sed volutpat, tellus non laoreet aliquet, risus felis ornare dolor, interdum venenatis turpis metus in lorem. Aliquam quam ligula, porttitor non ultrices ac, lacinia ullamcorper massa. Integer molestie eleifend urna, imperdiet dignissim tellus malesuada ac. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam tristique sem ac purus interdum, vitae pharetra erat fringilla. Integer non nunc a eros porttitor rutrum. Suspendisse ut libero urna. Vestibulum vitae est at diam vestibulum aliquet. Donec porta nunc eget lobortis mollis.
+- **Platform:** OpenShift Container Platform (OCP), version confirmed at deployment time
+- **Deployment model:** Dedicated OCP cluster; Concert Operate deployed into a dedicated namespace
+- **Container registry:** Internal Artifactory instance acting as a pull-through proxy for
+  `icr.io` and `cp.icr.io`. IBM entitlement key is not required when using this proxy path.
+- **Storage:** Nutanix CSI storage provisioner; `xfs` filesystem; storage class confirmed at
+  deployment time
+- **Image availability:** All required Concert Operate images available via the Artifactory
+  proxy: `icr.io/cpopen`, `icr.io/cpopen/cpfs`, `cp.icr.io/cp`, `cp.icr.io/cp/cp4waiops`
+  paths all validated
 
-Vestibulum luctus sodales odio, at luctus lacus lobortis a. Aliquam vulputate id turpis sit amet bibendum. Donec a dignissim tellus, vel vehicula erat. Pellentesque hendrerit ex magna, at dictum est pretium a. Vivamus faucibus ipsum lectus, ut elementum diam interdum scelerisque. Cras magna sapien, tincidunt quis eleifend at, tincidunt non eros. Aliquam ac augue turpis.
+### Event Ingestion Path
+
+Events originate from the batch scheduler's operations management layer. The near-term
+ingestion path uses an existing event forwarding agent (`postemsg`-style) on the source
+system. The agent is retargeted to deliver events to Concert Operate rather than the
+legacy event aggregator. No changes to the batch scheduler itself are required.
+
+**Connectivity:** The event source system must have outbound network access to the Concert
+Operate ingestion endpoint on `<CONCERT_OPERATE_HOSTNAME>:<PORT>`. Firewall rules and
+network security requests should be scoped to this single destination.
+
+### Integration Target
+
+Correlated incidents are forwarded to **ServiceNow Event Management** as the ITSM target.
+This aligns with the client environment's transition from a legacy event aggregator to
+ServiceNow Event Management as the primary event consolidation layer.

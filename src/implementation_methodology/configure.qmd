@@ -1,0 +1,31 @@
+---
+title: "Configure Concert Operate"
+format: html
+---
+
+### Configure Concert Operate: The How
+
+This page covers the post-install configuration of Concert Operate: setting up event
+ingestion, defining correlation policies, and configuring the ITSM integration.
+At the end of this step, Concert Operate should be receiving events and applying
+correlation rules.
+
+#### Prerequisites
+
+- Concert Operate installed and running (see [Install Concert Operate](install.qmd))
+- Event source system accessible and able to reach the Concert Operate ingestion endpoint
+- ServiceNow Event Management target available
+
+#### Procedure
+
+<!-- Document exact configuration steps as they are executed. Include screenshots or
+     command output where helpful. Note deviations from documented path. -->
+
+1.
+2.
+3.
+
+#### Verification
+
+<!-- Describe how to confirm configuration is correct: test event received, policy fired,
+     incident created in ServiceNow, etc. -->

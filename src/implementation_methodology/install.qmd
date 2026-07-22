@@ -1,0 +1,442 @@
+---
+title: "Install Concert Operate"
+format: html
+---
+
+This page covers the deployment of Concert Operate onto an OpenShift Container Platform (OCP)
+cluster. At the end of this step, Concert Operate is running and accessible in the target
+namespace.
+
+These instructions are based on the official IBM documentation:
+[Installing IBM Concert Operate in an air-gapped environment using a bastion host](https://www.ibm.com/docs/en/concert-operate/5.1.0?topic=offline-bastion-host)
+
+## Prerequisites
+
+- OCP cluster provisioned and accessible (`oc login` confirmed)
+- Cluster-admin privileges
+- Storage class available with `allowVolumeExpansion: true` (see [Environment](../solution_overview/environment.qmd))
+- Concert Operate images available in your private container registry. The following source paths must be accessible:
+  - `icr.io/cpopen`
+  - `cp.icr.io/cp`
+- `oc` CLI installed
+- `ibm-pak` plugin v1.23.0 installed
+- `aiopsctl` v5.1.0 installed
+
+**Download and install `ibm-pak` v1.23.0:**
+
+```bash
+curl -LO https://github.com/IBM/ibm-pak/releases/download/v1.23.0/oc-ibm_pak-linux-amd64.tar.gz
+tar -xf oc-ibm_pak-linux-amd64.tar.gz
+mv oc-ibm_pak-linux-amd64 /usr/local/bin/oc-ibm_pak
+oc ibm-pak --version   # Expected: v1.23.0
+```
+
+**Download and install `aiopsctl` v5.1.0:**
+
+```bash
+curl -LO "https://github.com/IBM/aiopsctl/releases/download/v5.1.0/aiopsctl-linux_amd64.tar.gz"
+tar xf "aiopsctl-linux_amd64.tar.gz"
+mv aiopsctl /usr/local/bin/aiopsctl
+aiopsctl --version
+```
+
+Use the appropriate archive for your platform: `aiopsctl-linux_amd64.tar.gz`, `aiopsctl-linux_s390x.tar.gz`,
+`aiopsctl-linux_arm64.tar.gz`, `aiopsctl-darwin_amd64.tar.gz`, or `aiopsctl-darwin_arm64.tar.gz`.
+For Windows, run from a WSL terminal.
+
+---
+
+## Procedure
+
+### Step 1: Set environment variables
+
+Create and source an environment variable script. Replace the storage class names and registry
+values with those confirmed for your environment.
+
+```bash
+cat << 'EOF' > ~/waiops_var_concert-operate.sh
+export CP4AIOPS_NAME=ibm-cp-aiops
+export CP4AIOPS_SIZE=large             # production base deployment
+export SECURE_TUNNEL=false
+export PROJECT_CP4AIOPS=concert-operate
+export ACCEPT_LICENSE=true
+export CATALOG_SRC_CP4AIOPS=ibm-aiops-catalog
+export LOG_ANOMALY=false               # base deployment; set true for extended
+
+# Storage: confirm storage class names with your storage team
+export STG_CLASS=<RWO-storage-class-name>
+export STG_CLASS_BLOCK=<RWO-storage-class-name>
+
+# Hybrid storage: leave empty if not using hybrid storage
+export IR_CORE_POSTGRES_LOCAL_STORAGE_CLASS=''
+export TOPOLOGY_POSTGRES_LOCAL_STORAGE_CLASS=''
+export KAFKA_LOCAL_STORAGE_CLASS=''
+
+# Customer details
+export CUSTOMER_NAME=<your company name>
+export CUSTOMER_ICN=<your IBM Customer Number>
+export CUSTOMER_ENVIRONMENT=poc
+
+export INSTALL_MODE_NAMESPACE=${PROJECT_CP4AIOPS}
+export TOPOLOGY_TERMINOLOGY=application
+EOF
+
+. ~/waiops_var_concert-operate.sh
+echo "PROJECT: $PROJECT_CP4AIOPS | SIZE: $CP4AIOPS_SIZE | STG: $STG_CLASS"
+```
+
+For Red Hat OpenShift Data Foundation (ODF), the storage class values are:
+
+```bash
+export STG_CLASS=ocs-storagecluster-ceph-rbd
+export STG_CLASS_BLOCK=ocs-storagecluster-ceph-rbd
+```
+
+For Nutanix CSI, confirm the storage class name with your platform team using `oc get sc`, then
+set both variables to the confirmed class name.
+
+### Step 2: Update the global cluster pull secret (if needed)
+
+Your OCP cluster needs credentials to pull images from the registry where Concert Operate
+images are stored. If your cluster already has a pull secret configured for your private
+registry (whether that is an Artifactory instance, a mirrored registry, or another private
+repository), confirm with your platform team and skip this step.
+
+If the credentials are not yet configured, add them now. For pulling directly from the IBM
+Entitled Registry, get your IBM Entitlement Key from
+[MyIBM Container Software Library](https://myibm.ibm.com/products-services/containerlibrary).
+
+```bash
+export ENTITLED_REGISTRY_PASSWORD=<your-ibm-entitlement-key>
+
+# Pull current global pull secret
+oc get secret/pull-secret -n openshift-config \
+  -o jsonpath='{.data.\.dockerconfigjson}' | base64 -d > /tmp/pull-secret.json
+
+# Add registry credentials
+oc registry login \
+  --registry="cp.icr.io" \
+  --auth-basic="cp:${ENTITLED_REGISTRY_PASSWORD}" \
+  --to=/tmp/pull-secret.json
+
+# Apply updated pull secret
+oc set data secret/pull-secret -n openshift-config \
+  --from-file=.dockerconfigjson=/tmp/pull-secret.json
+
+unset ENTITLED_REGISTRY_PASSWORD
+```
+
+Wait for all nodes to pick up the updated pull secret before proceeding:
+
+```bash
+oc get MachineConfigPool -w
+```
+
+All MachineConfigPools must show `UPDATED=True` and `UPDATING=False` before continuing.
+
+### Step 3: Download the CASE and generate IDMS manifests (if needed)
+
+If Concert Operate images have already been mirrored to your private registry, skip this step
+and go directly to Step 4. The CASE download is only needed if you need to generate the IDMS
+from scratch or perform the image mirror.
+
+```bash
+export CASE_NAME=ibm-cp-waiops
+export CASE_VERSION=2.0.0
+export TARGET_REGISTRY=<your-artifactory-registry-hostname>
+
+oc ibm-pak get ${CASE_NAME} --version ${CASE_VERSION}
+oc ibm-pak generate mirror-manifests ${CASE_NAME} ${TARGET_REGISTRY} --version ${CASE_VERSION}
+```
+
+`TARGET_REGISTRY` is the hostname of your private registry. The catalog source
+collision warning about `ibm-cs-install-catalog`, `ibm-events-operator-catalog`, and
+`ibm-pg-operator-catalog` can be safely ignored.
+
+> **Note:** `ibm-pak` v1.23.0 is required. Earlier versions fail signature validation on
+> sub-CASEs signed with newer keys (`ibm-cs-iam`) and abort manifest generation.
+
+### Step 4: Apply the IDMS
+
+The IDMS (ImageDigestMirrorSet) tells OCP to redirect image pulls from the IBM public registry
+to your private registry. This step is required even if images were pre-mirrored by your
+platform team.
+
+If you ran Step 3, apply the generated file directly:
+
+```bash
+oc apply -f ~/.ibm-pak/data/mirror/${CASE_NAME}/${CASE_VERSION}/image-digest-mirror-set.yaml
+```
+
+If you skipped Step 3, create the IDMS manually. Replace `<REGISTRY_HOST>` with the hostname
+of your private registry (Artifactory, a mirrored registry, or equivalent):
+
+```yaml
+apiVersion: config.openshift.io/v1
+kind: ImageDigestMirrorSet
+metadata:
+  name: ibm-cp-waiops
+spec:
+  imageDigestMirrors:
+  - mirrors:
+    - <REGISTRY_HOST>/cp
+    source: cp.icr.io/cp
+  - mirrors:
+    - <REGISTRY_HOST>/cpopen
+    source: icr.io/cpopen
+```
+
+```bash
+# Apply and verify
+oc apply -f <your-idms-file.yaml>
+oc get imagedigestmirrorset
+
+# Wait for all nodes to pick up the config
+oc get MachineConfigPool -w
+```
+
+All MachineConfigPools must return to `UPDATED=True` before continuing.
+
+### Step 5: Create the catalog sources
+
+```bash
+cat << EOF | oc apply -f -
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: ${CATALOG_SRC_CP4AIOPS}
+  namespace: ${INSTALL_MODE_NAMESPACE}
+spec:
+  displayName: ${CATALOG_SRC_CP4AIOPS}
+  publisher: IBM Content
+  sourceType: grpc
+  image: icr.io/cpopen/ibm-aiops-catalog@sha256:61e2b08e3731ecd2bf9b8349ca1d836e288f11847f0ec43b1711b1558d8218ce
+  grpcPodConfig:
+    securityContextConfig: restricted
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: ibm-cert-manager-catalog
+  namespace: openshift-marketplace
+spec:
+  displayName: ibm-cert-manager
+  publisher: IBM
+  sourceType: grpc
+  image: icr.io/cpopen/ibm-cert-manager-operator-catalog@sha256:cdfefe057e75b30c50b1cf9f8c2a71a07b498d09bb5b74c454d3a0a7c11aa989
+EOF
+```
+
+`ibm-aiops-catalog` is created in the Concert Operate namespace (`${INSTALL_MODE_NAMESPACE}`),
+not in `openshift-marketplace`. `ibm-cert-manager-catalog` goes in `openshift-marketplace`.
+
+Verify both catalog sources are running:
+
+```bash
+oc get catalogsource ibm-cert-manager-catalog -n openshift-marketplace
+oc get catalogsource ${CATALOG_SRC_CP4AIOPS} -n ${INSTALL_MODE_NAMESPACE}
+```
+
+### Step 6: Create the namespace and run precheck
+
+```bash
+oc create namespace ${PROJECT_CP4AIOPS}
+
+# Annotate for amd64 architecture
+oc annotate namespace "${PROJECT_CP4AIOPS}" \
+  openshift.io/node-selector="kubernetes.io/arch=amd64"
+
+# Verify
+oc get namespace ${PROJECT_CP4AIOPS}
+```
+
+Run the precheck to validate the cluster is ready:
+
+```bash
+aiopsctl server precheck -n ${PROJECT_CP4AIOPS}
+```
+
+All checks must pass before proceeding. Expected results:
+
+| Check | Expected result |
+|---|---|
+| Meets OCP Version Requirement | Passed |
+| Cert Mgr Operator Exists | Passed |
+| Meets Hardware Requirements | Passed |
+| No Storage Issues | Passed |
+| Certificates Valid | Passed |
+
+> **Note:** If cert-manager is not yet installed, the `Cert Mgr Operator Exists` check will
+> fail at this point. Proceed to Step 7 to install it, then re-run the precheck to confirm.
+
+### Step 7: Install Cert Manager
+
+Skip this step if a certificate manager is already installed on the cluster.
+
+```bash
+cat << EOF | oc apply -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ibm-cert-manager
+---
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: ibm-cert-manager-operator-group
+  namespace: ibm-cert-manager
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: ibm-cert-manager-operator
+  namespace: ibm-cert-manager
+spec:
+  channel: v4.2
+  installPlanApproval: Automatic
+  name: ibm-cert-manager-operator
+  source: ibm-cert-manager-catalog
+  sourceNamespace: openshift-marketplace
+EOF
+```
+
+Wait for all 4 pods to reach `Running` before continuing:
+
+```bash
+oc -n ibm-cert-manager get pods -w
+```
+
+Expected output:
+
+```
+NAME                                        READY   STATUS    RESTARTS   AGE
+cert-manager-cainjector-xxx                 1/1     Running   0          ...
+cert-manager-controller-xxx                 1/1     Running   0          ...
+cert-manager-webhook-xxx                    1/1     Running   0          ...
+ibm-cert-manager-operator-xxx               1/1     Running   0          ...
+```
+
+### Step 8: Install the Concert Operate operator
+
+```bash
+cat << EOF | oc apply -f -
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: concert-operate-operator-group
+  namespace: ${PROJECT_CP4AIOPS}
+spec:
+  targetNamespaces:
+    - "${PROJECT_CP4AIOPS}"
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: ibm-aiops-orchestrator
+  namespace: ${INSTALL_MODE_NAMESPACE}
+spec:
+  channel: v5.1
+  installPlanApproval: Automatic
+  name: ibm-aiops-orchestrator
+  source: ${CATALOG_SRC_CP4AIOPS}
+  sourceNamespace: ${INSTALL_MODE_NAMESPACE}
+EOF
+```
+
+`installPlanApproval` must remain `Automatic`. Manual approval is not supported and can result
+in a failed installation.
+
+Wait for the operator CSV to reach `Succeeded`:
+
+```bash
+oc get csv -n ${INSTALL_MODE_NAMESPACE} -w | grep ibm-aiops-orchestrator
+```
+
+Expected output:
+
+```
+ibm-aiops-orchestrator.v5.1.0   IBM Concert Operate   5.1.0   Succeeded
+```
+
+### Step 9: Create the Installation CR
+
+```bash
+cat << EOF | oc apply -f -
+apiVersion: orchestrator.aiops.ibm.com/v1alpha1
+kind: Installation
+metadata:
+  name: ${CP4AIOPS_NAME}
+  namespace: ${PROJECT_CP4AIOPS}
+spec:
+  size: ${CP4AIOPS_SIZE}
+  storage:
+    aiops-ir-core-postgres:
+      storageClass: ${IR_CORE_POSTGRES_LOCAL_STORAGE_CLASS}
+    aiops-ir-core-postgres-wal:
+      storageClass: ${IR_CORE_POSTGRES_LOCAL_STORAGE_CLASS}
+    aiops-topology-postgres:
+      storageClass: ${TOPOLOGY_POSTGRES_LOCAL_STORAGE_CLASS}
+    aiops-topology-postgres-wal:
+      storageClass: ${TOPOLOGY_POSTGRES_LOCAL_STORAGE_CLASS}
+    data-iaf-system-kafka:
+      storageClass: ${KAFKA_LOCAL_STORAGE_CLASS}
+  storageClass: ${STG_CLASS}
+  storageClassLargeBlock: ${STG_CLASS_BLOCK}
+  imagePullSecret:
+  topologyModel: ${TOPOLOGY_TERMINOLOGY}
+  license:
+    accept: ${ACCEPT_LICENSE}
+  pakModules:
+  - name: aiopsFoundation
+    enabled: true
+  - name: applicationManager
+    enabled: true
+  - name: aiManager
+    enabled: true
+  - name: connection
+    enabled: ${SECURE_TUNNEL}
+  - name: logAnomalyDetection
+    enabled: ${LOG_ANOMALY}
+EOF
+```
+
+`aiopsFoundation`, `applicationManager`, and `aiManager` must remain `enabled: true`.
+
+Monitor installation progress. The PHASE starts as `Updating` and changes to `Running`
+when complete. This takes 60-90 minutes:
+
+```bash
+oc get installations.orchestrator.aiops.ibm.com -n ${PROJECT_CP4AIOPS} -w
+```
+
+If the installation stalls, check for components that are not ready:
+
+```bash
+oc get installation.orchestrator.aiops.ibm.com -o yaml \
+  -n ${PROJECT_CP4AIOPS} | grep 'Not Ready'
+
+# Get detail on a specific not-ready component (e.g. zenservice)
+oc get <component> -o yaml -n ${PROJECT_CP4AIOPS}
+```
+
+---
+
+## Verification
+
+Once the installation phase shows `Running`, retrieve the console URL and credentials:
+
+```bash
+# Console URL
+oc get route -n ${PROJECT_CP4AIOPS} cpd -o jsonpath='{.spec.host}'
+
+# Admin username
+oc -n ${PROJECT_CP4AIOPS} get secret platform-auth-idp-credentials \
+  -o jsonpath='{.data.admin_username}' | base64 -d && echo
+
+# Admin password
+oc -n ${PROJECT_CP4AIOPS} get secret platform-auth-idp-credentials \
+  -o jsonpath='{.data.admin_password}' | base64 -d && echo
+```
+
+Open the console URL in a browser and log in with the admin credentials to confirm the
+Concert Operate UI is accessible.

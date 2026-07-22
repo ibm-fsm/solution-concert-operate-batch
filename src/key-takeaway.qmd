@@ -4,5 +4,5 @@ format: html
 ---
 
 ### Best Practices
-(Capture the main takeaways and results of the project)
 
+<!-- Capture main takeaways, best practices, and results at pilot closeout -->
