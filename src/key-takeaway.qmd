@@ -1,8 +1,0 @@
----
-title: "Key Takeaways"
-format: html
----
-
-### Best Practices
-
-<!-- Capture main takeaways, best practices, and results at pilot closeout -->
