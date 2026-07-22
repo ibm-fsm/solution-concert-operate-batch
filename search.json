@@ -30,6 +30,28 @@
     ]
   },
   {
+    "objectID": "src/solution_overview/prepare.html",
+    "href": "src/solution_overview/prepare.html",
+    "title": "Solution Overview",
+    "section": "",
+    "text": "Concert Operate for Batch Processing: The What\nIBM Concert Operate is an AIOps platform deployed on OpenShift Container Platform (OCP) that provides event correlation, noise reduction, and runbook automation. In this solution, it is positioned as the intelligence layer between a batch job event source and an ITSM ticketing system.\nThe core capability applied here is temporal and scope-based event correlation: Concert Operate groups related events (those that occur within a defined time window and match a defined scope: job name, job group, or dependency chain) into a single correlated incident. Only one ticket is raised for the correlated group, suppressing the duplicate and cascential noise that would otherwise flood the queue.\nKey capabilities used in this solution:\n\nTemporal correlation (“x events in y minutes”): groups repeated alerts from the same source into a single incident once a persistence threshold is crossed\nScope-based grouping: correlates events across a job dependency chain into one incident\nDeduplication: suppresses duplicate tickets for the same underlying failure\nRunbook automation: triggers a defined automated response (e.g. job retry) when a correlation policy fires\n\nWhy Concert Operate over alternatives:\nThe solution is deployed self-hosted on OCP, which fits environments with strict data residency or air-gap requirements. It integrates with existing event forwarding mechanisms without requiring changes to the batch scheduler or monitoring toolchain. Only the outbound event destination is retargeted.",
+    "crumbs": [
+      "Solution Overview",
+      "Prepare"
+    ]
+  },
+  {
+    "objectID": "src/implementation_methodology/configure.html",
+    "href": "src/implementation_methodology/configure.html",
+    "title": "Configure Concert Operate",
+    "section": "",
+    "text": "Configure Concert Operate: The How\nThis page covers the post-install configuration of Concert Operate: setting up event ingestion, defining correlation policies, and configuring the ITSM integration. At the end of this step, Concert Operate should be receiving events and applying correlation rules.\n\nPrerequisites\n\nConcert Operate installed and running (see Install Concert Operate)\nEvent source system accessible and able to reach the Concert Operate ingestion endpoint\nServiceNow Event Management target available\n\n\n\nProcedure\n\n\n\n\n\n\n\n\nVerification",
+    "crumbs": [
+      "Implementation",
+      "Configure Concert Operate"
+    ]
+  },
+  {
     "objectID": "src/key-takeaway.html",
     "href": "src/key-takeaway.html",
     "title": "Key Takeaways",
@@ -38,6 +60,13 @@
     "crumbs": [
       "Key Takeaways"
     ]
+  },
+  {
+    "objectID": "src/landing_page/landing_page.html",
+    "href": "src/landing_page/landing_page.html",
+    "title": "Project Name",
+    "section": "",
+    "text": "Project Name\nSubtitle\n\n\nOur Documentation \n\n\n\n\n\nNext Steps\n\n\n\nL ink 1\n\n\n\nLink 2"
   },
   {
     "objectID": "src/implementation_methodology/install.html",
@@ -84,14 +113,14 @@
     ]
   },
   {
-    "objectID": "src/solution_overview/prepare.html",
-    "href": "src/solution_overview/prepare.html",
-    "title": "Solution Overview",
+    "objectID": "src/solution_overview/troubleshooting.html",
+    "href": "src/solution_overview/troubleshooting.html",
+    "title": "Troubleshooting",
     "section": "",
-    "text": "Concert Operate for Batch Processing: The What\nIBM Concert Operate is an AIOps platform deployed on OpenShift Container Platform (OCP) that provides event correlation, noise reduction, and runbook automation. In this solution, it is positioned as the intelligence layer between a batch job event source and an ITSM ticketing system.\nThe core capability applied here is temporal and scope-based event correlation: Concert Operate groups related events (those that occur within a defined time window and match a defined scope: job name, job group, or dependency chain) into a single correlated incident. Only one ticket is raised for the correlated group, suppressing the duplicate and cascential noise that would otherwise flood the queue.\nKey capabilities used in this solution:\n\nTemporal correlation (“x events in y minutes”): groups repeated alerts from the same source into a single incident once a persistence threshold is crossed\nScope-based grouping: correlates events across a job dependency chain into one incident\nDeduplication: suppresses duplicate tickets for the same underlying failure\nRunbook automation: triggers a defined automated response (e.g. job retry) when a correlation policy fires\n\nWhy Concert Operate over alternatives:\nThe solution is deployed self-hosted on OCP, which fits environments with strict data residency or air-gap requirements. It integrates with existing event forwarding mechanisms without requiring changes to the batch scheduler or monitoring toolchain. Only the outbound event destination is retargeted.",
+    "text": "Troubleshooting\nThis page captures known issues and resolutions encountered during deployment and configuration. It is updated as issues are discovered and resolved.",
     "crumbs": [
       "Solution Overview",
-      "Prepare"
+      "Troubleshooting"
     ]
   },
   {
@@ -104,34 +133,5 @@
       "Solution Overview",
       "Environment"
     ]
-  },
-  {
-    "objectID": "src/solution_overview/troubleshooting.html",
-    "href": "src/solution_overview/troubleshooting.html",
-    "title": "Troubleshooting",
-    "section": "",
-    "text": "Troubleshooting\nThis page captures known issues and resolutions encountered during deployment and configuration. It is updated as issues are discovered and resolved.",
-    "crumbs": [
-      "Solution Overview",
-      "Troubleshooting"
-    ]
-  },
-  {
-    "objectID": "src/implementation_methodology/configure.html",
-    "href": "src/implementation_methodology/configure.html",
-    "title": "Configure Concert Operate",
-    "section": "",
-    "text": "Configure Concert Operate: The How\nThis page covers the post-install configuration of Concert Operate: setting up event ingestion, defining correlation policies, and configuring the ITSM integration. At the end of this step, Concert Operate should be receiving events and applying correlation rules.\n\nPrerequisites\n\nConcert Operate installed and running (see Install Concert Operate)\nEvent source system accessible and able to reach the Concert Operate ingestion endpoint\nServiceNow Event Management target available\n\n\n\nProcedure\n\n\n\n\n\n\n\n\nVerification",
-    "crumbs": [
-      "Implementation",
-      "Configure Concert Operate"
-    ]
-  },
-  {
-    "objectID": "src/landing_page/landing_page.html",
-    "href": "src/landing_page/landing_page.html",
-    "title": "Project Name",
-    "section": "",
-    "text": "Project Name\nSubtitle\n\n\nOur Documentation \n\n\n\n\n\nNext Steps\n\n\n\nL ink 1\n\n\n\nLink 2"
   }
 ]
