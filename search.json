@@ -41,32 +41,114 @@
     ]
   },
   {
-    "objectID": "src/implementation_methodology/configure.html",
-    "href": "src/implementation_methodology/configure.html",
-    "title": "Configure Concert Operate",
+    "objectID": "src/implementation_methodology/validate.html",
+    "href": "src/implementation_methodology/validate.html",
+    "title": "Validate the OCP Cluster",
     "section": "",
-    "text": "Configure Concert Operate: The How\nThis page covers the post-install configuration of Concert Operate: setting up event ingestion, defining correlation policies, and configuring the ITSM integration. At the end of this step, Concert Operate should be receiving events and applying correlation rules.\n\nPrerequisites\n\nConcert Operate installed and running (see Install Concert Operate)\nEvent source system accessible and able to reach the Concert Operate ingestion endpoint\nServiceNow Event Management target available\n\n\n\nProcedure\n\n\n\n\n\n\n\n\nVerification",
+    "text": "Run these checks before deploying Concert Operate. They catch environment blockers early and avoid a failed or incomplete installation. At the end of this step you will have a confirmed go / no-go for the cluster.\nThese checks apply to a Concert Operate v5.1.0 production base deployment on a self-hosted OpenShift Container Platform (OCP) cluster. Hardware requirements are sourced from the IBM Concert Operate v5.1.0 documentation (Table 4: Concert Operate + OpenShift, new cluster, production base, without Hybrid storage).",
     "crumbs": [
       "Implementation",
-      "Configure Concert Operate"
+      "Validate the OCP Cluster"
     ]
   },
   {
-    "objectID": "src/key-takeaway.html",
-    "href": "src/key-takeaway.html",
-    "title": "Key Takeaways",
-    "section": "",
-    "text": "Best Practices",
+    "objectID": "src/implementation_methodology/validate.html#prerequisites",
+    "href": "src/implementation_methodology/validate.html#prerequisites",
+    "title": "Validate the OCP Cluster",
+    "section": "Prerequisites",
+    "text": "Prerequisites\n\noc CLI installed and authenticated (oc login confirmed)\naiopsctl v5.1.0 installed (required for storage benchmark and precheck; see Install section below)\nCluster-admin or equivalent read access to inspect nodes, storage, and network resources\nNamespace creation rights (or a pre-created target namespace)\nContact established with the platform / storage team for items that cannot be confirmed from the CLI alone (StorageClass filesystem type, NetworkPolicy defaults)\n\n\nInstall aiopsctl\nDownload the binary for your platform and put it on your PATH. Use the version-pinned URL to ensure you have v5.1.0.\n# Replace the filename with your platform:\n# aiopsctl-linux_amd64.tar.gz  |  aiopsctl-linux_arm64.tar.gz\n# aiopsctl-darwin_amd64.tar.gz |  aiopsctl-darwin_arm64.tar.gz\n# Windows: run from a WSL terminal using the linux_amd64 binary\n\nAIOPSCTL_TAR=aiopsctl-linux_amd64.tar.gz\ncurl -LO \"https://github.com/IBM/aiopsctl/releases/download/v5.1.0/${AIOPSCTL_TAR}\"\ntar xf \"${AIOPSCTL_TAR}\"\nmv aiopsctl /usr/local/bin/aiopsctl\naiopsctl version   # expected: v5.1.0",
     "crumbs": [
-      "Key Takeaways"
+      "Implementation",
+      "Validate the OCP Cluster"
     ]
   },
   {
-    "objectID": "src/landing_page/landing_page.html",
-    "href": "src/landing_page/landing_page.html",
-    "title": "Project Name",
-    "section": "",
-    "text": "Project Name\nSubtitle\n\n\nOur Documentation \n\n\n\n\n\nNext Steps\n\n\n\nL ink 1\n\n\n\nLink 2"
+    "objectID": "src/implementation_methodology/validate.html#ocp-version-and-architecture",
+    "href": "src/implementation_methodology/validate.html#ocp-version-and-architecture",
+    "title": "Validate the OCP Cluster",
+    "section": "1. OCP Version and Architecture",
+    "text": "1. OCP Version and Architecture\nConcert Operate v5.1.0 supports OCP v4.16 through v4.21 on x86_64 only. ARM and ppc64le architectures are not supported.\noc version\nExpected output (example):\nClient Version: 4.18.x\nServer Version: 4.18.x\nKubernetes Version: v1.31.x\nFor architecture, check the KERNEL-VERSION column of oc get nodes -o wide. On x86_64 nodes the kernel version ends in .x86_64:\noc get nodes -o wide\nExpected KERNEL-VERSION value (example):\n5.14.0-427.130.1.el9_4.x86_64\nAll nodes must show .x86_64 in their kernel version. Any other suffix (.aarch64, .s390x) means the architecture requirement is not met.\n\n\n\n\n\n\n\n\nCheck\nCommand\nWhat to look for\n\n\n\n\nOCP version in range\noc version\nServer Version: 4.16.x – 4.21.x\n\n\nNode architecture\noc get nodes -o wide\nAll nodes: KERNEL-VERSION ends in .x86_64",
+    "crumbs": [
+      "Implementation",
+      "Validate the OCP Cluster"
+    ]
+  },
+  {
+    "objectID": "src/implementation_methodology/validate.html#compute-worker-nodes",
+    "href": "src/implementation_methodology/validate.html#compute-worker-nodes",
+    "title": "Validate the OCP Cluster",
+    "section": "2. Compute: Worker Nodes",
+    "text": "2. Compute: Worker Nodes\nThe production base profile requires a minimum of 6 worker nodes. Per-node minimums are 16 vCPU and 20 GB RAM. The cluster as a whole must satisfy the aggregate totals: 158 vCPU and 384 GB RAM across all workers. If nodes are provisioned below the per-node minimums, additional nodes are required to reach those totals.\nCount worker nodes:\noc get nodes --selector='node-role.kubernetes.io/worker'\nCapacity and Allocatable for all workers at once:\noc describe node is verbose. Use jsonpath to pull just the numbers you need across all worker nodes in one pass:\nfor node in $(oc get nodes --selector='node-role.kubernetes.io/worker' -o name); do\n  echo \"--- ${node} ---\"\n  oc get ${node} -o jsonpath=\\\n'CPU capacity: {.status.capacity.cpu}{\"\\n\"}'\\\n'CPU allocatable: {.status.allocatable.cpu}{\"\\n\"}'\\\n'Memory capacity (GiB): {.status.capacity.memory}{\"\\n\"}'\\\n'Memory allocatable (GiB): {.status.allocatable.memory}{\"\\n\"}'\\\n'Ephemeral storage capacity (GiB): {.status.capacity.ephemeral-storage}{\"\\n\"}'\\\n'Ephemeral storage allocatable (GiB): {.status.allocatable.ephemeral-storage}{\"\\n\"}'\ndone\nMemory and storage values are returned in Ki (kibibytes). Divide by 1,048,576 to convert to GiB, or use oc adm top nodes for a live utilization view in human-readable units:\noc adm top nodes --selector='node-role.kubernetes.io/worker'\nAggregate capacity across all nodes (one line per node):\noc get nodes -o=custom-columns=\\\n'NAME:.metadata.name,'\\\n'CPU:.status.capacity.cpu,'\\\n'MEMORY_Ki:.status.capacity.memory,'\\\n'STORAGE_Ki:.status.capacity.ephemeral-storage'\nRaw Ki values are expected here. For a node showing 131856920Ki memory, that is approximately 125 GiB (131,856,920 / 1,048,576). Multiply the per-node GiB by the worker count to confirm the cluster total meets 384 GB.\nAllocatable is capacity minus OS and kubelet overhead. It is the figure that matters for scheduling.\n\n\n\nCheck\nPer-node minimum\nAggregate target\n\n\n\n\nWorker node count\nn/a\n≥ 6 nodes\n\n\nvCPU per worker\n≥ 16 vCPU\n158 vCPU total\n\n\nRAM per worker\n≥ 20 GB\n384 GB total\n\n\nEphemeral storage per worker\n≥ 120 GB\nn/a\n\n\nControl plane nodes\nn/a\n3 nodes",
+    "crumbs": [
+      "Implementation",
+      "Validate the OCP Cluster"
+    ]
+  },
+  {
+    "objectID": "src/implementation_methodology/validate.html#storage-storageclass",
+    "href": "src/implementation_methodology/validate.html#storage-storageclass",
+    "title": "Validate the OCP Cluster",
+    "section": "3. Storage: StorageClass",
+    "text": "3. Storage: StorageClass\nStorage class configuration cannot be changed after installation. Get this right before proceeding.\n\n3a. Identify the StorageClass to use\nStart by listing all available StorageClasses:\noc get sc\nExample output:\nNAME                          PROVISIONER                    RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION\nocs-storagecluster-ceph-rbd   openshift-storage.rbd.csi...   Delete          Immediate              true\nocs-storagecluster-cephfs     openshift-storage.cephfs...    Delete          Immediate              true\nThe StorageClass for Concert Operate must be a block (RWO) class backed by a CSI driver. Look for classes provisioned by a block CSI driver (rbd, nutanix, portworx, gp3, etc.). CephFS and NFS classes provision filesystem (RWX) volumes; those are not the right choice for the primary Concert Operate storage class.\nIf multiple block classes exist, confirm which one is appropriate with your platform team. Note the name; you will use it in the installation CR and in the checks below. Replace &lt;storage-class-name&gt; with that name throughout this section.\nThe oc get sc output already shows ALLOWVOLUMEEXPANSION and VOLUMEBINDINGMODE for all classes at a glance. Use oc get sc &lt;storage-class-name&gt; -o yaml for full detail on a specific class.\n\n\n3b. Verify filesystem type is XFS\nMinIO requires XFS. An ext4 filesystem will exhaust inodes even when PVC space is available, leaving the filesystem read-only with no recovery path.\noc get sc &lt;storage-class-name&gt; -o yaml | grep -E 'fsType|csi.storage.k8s.io/fstype'\nLook for fsType: xfs or csi.storage.k8s.io/fstype: xfs in the parameters block. If the field is missing or set to ext4, the StorageClass must be reconfigured or a new XFS-configured class must be requested from the storage team before installation.\n\nNote: Some CSI drivers (e.g. Nutanix CSI) default to ext4. Confirm explicitly with the platform team. Do not assume the default is XFS.\n\n\n\n3c. Verify allowVolumeExpansion: true\nRequired for runtime PVC resizing without downtime:\noc get sc &lt;storage-class-name&gt; -o yaml | grep allowVolumeExpansion\nMust return allowVolumeExpansion: true. If it returns false or is absent, ask the platform team to enable it on the StorageClass before installation.\n\n\n3d. Check volumeBindingMode\noc get sc &lt;storage-class-name&gt; -o yaml | grep volumeBindingMode\nEither Immediate or WaitForFirstConsumer is acceptable. Confirm it is compatible with your cluster topology (single-zone vs. multi-zone).\n\n\n3e. PVC smoke test\nCreate a small test PVC to confirm the StorageClass provisions and binds successfully. Replace &lt;storage-class-name&gt; with the confirmed class name.\napiVersion: v1\nkind: PersistentVolumeClaim\nmetadata:\n  name: concert-storage-smoke-test\n  namespace: default\nspec:\n  accessModes:\n    - ReadWriteOnce\n  storageClassName: &lt;storage-class-name&gt;\n  volumeMode: Filesystem\n  resources:\n    requests:\n      storage: 10Gi\noc apply -f smoke-test-pvc.yaml\noc get pvc concert-storage-smoke-test   # expect: Bound within ~60 seconds\noc delete pvc concert-storage-smoke-test\nIf the PVC stays in Pending, check events for provisioning errors:\noc describe pvc concert-storage-smoke-test",
+    "crumbs": [
+      "Implementation",
+      "Validate the OCP Cluster"
+    ]
+  },
+  {
+    "objectID": "src/implementation_methodology/validate.html#storage-capacity-and-performance",
+    "href": "src/implementation_methodology/validate.html#storage-capacity-and-performance",
+    "title": "Validate the OCP Cluster",
+    "section": "4. Storage: Capacity and Performance",
+    "text": "4. Storage: Capacity and Performance\n\n4a. Total PVC capacity\nThe production profile requires 2,627 Gi of usable PVC capacity. Check existing PV availability and confirm no pre-existing large claims will crowd out the installation:\noc get pv\noc get pvc -A   # check all namespaces for existing large claims\n\n\n4b. IOPS: benchmark with aiopsctl\nRun the built-in storage benchmark against your block StorageClass. The namespace must already exist; create it first if needed:\noc new-project &lt;TARGET_NAMESPACE&gt;\nThen run the benchmark. It takes approximately 8 minutes and will prompt for confirmation before adding load to the cluster.\naiopsctl benchmark storage \\\n  --namespace=&lt;TARGET_NAMESPACE&gt; \\\n  --storage-class=&lt;storage-class-name&gt;\nIf storage performance varies significantly by node (e.g. nodes have different underlying disk tiers), target a specific node:\naiopsctl benchmark storage \\\n  --namespace=&lt;TARGET_NAMESPACE&gt; \\\n  --storage-class=&lt;storage-class-name&gt; \\\n  --node=&lt;node-name&gt;\nExample output:\nBenchmark Results:\nMeasurement                 Read                           Write\nSequential IOPS             10831.66      ✔ (&gt; 5000 )      6665.42       ✔ (&gt; 5000 )\nSequential Bandwidth        40.87 Mi/sec  ✔ (&gt; 20 Mi/sec)  26.08 Mi/sec  ✔ (&gt; 20 Mi/sec)\nAverage-Sequential Latency  626.56 usec   ✖ (&lt; 500 usec)   1133.56 usec  ✖ (&lt; 1000 usec)\nMixed-Sequential IOPS       2260.35                        6778.59\nMinimum passing thresholds:\n\n\n\nMetric\nRead\nWrite\n\n\n\n\nMinimum sequential IOPS\n5,000\n5,000\n\n\nMinimum sequential bandwidth\n20 MiB/s\n20 MiB/s\n\n\nMaximum average sequential latency\n500 µsec\n1,000 µsec\n\n\n\nIOPS and bandwidth failures are hard blockers. Latency failures are a warning. Network-attached storage often exceeds the latency thresholds under normal conditions while still being suitable for Concert Operate in practice. If latency fails, note it and raise it with the storage team, but do not halt validation solely on latency. IOPS and bandwidth must pass.\nThese thresholds do not apply to native public cloud storage (Amazon EBS, IBM Cloud Block Storage).",
+    "crumbs": [
+      "Implementation",
+      "Validate the OCP Cluster"
+    ]
+  },
+  {
+    "objectID": "src/implementation_methodology/validate.html#network",
+    "href": "src/implementation_methodology/validate.html#network",
+    "title": "Validate the OCP Cluster",
+    "section": "5. Network",
+    "text": "5. Network\n\n5a. Cluster egress to the private container registry\nConfirm the cluster can reach your private registry from within the cluster nodes, not just from a workstation. Use a debug pod on a worker node:\n# Option 1: curl from the node host\noc debug node/&lt;worker-node-name&gt; -- chroot /host \\\n  curl -s -o /dev/null -w \"%{http_code}\" https://&lt;REGISTRY_HOST&gt;\n\n# Expected: 200 or 401 (auth challenge means network is reachable)\n\n# Option 2: pull a known image via crictl\noc debug node/&lt;worker-node-name&gt; -- chroot /host \\\n  crictl pull &lt;REGISTRY_HOST&gt;/cpopen/&lt;any-image&gt;\nReplace &lt;REGISTRY_HOST&gt; with your private registry hostname (Artifactory or equivalent).\nThe following IBM image source paths must be reachable through the registry proxy:\n\nicr.io/cpopen\nicr.io/cpopen/cpfs\ncp.icr.io/cp\ncp.icr.io/cp/cp4waiops\n\n\n\n5b. NetworkPolicy defaults\nCheck whether the cluster applies default-deny NetworkPolicies to new namespaces:\noc get networkpolicy -A\nIf default-deny policies are in place, add explicit allow rules for the Concert Operate namespace before installation. Check also for any proxy configuration that may need noProxy entries for the registry hostname or the Concert Operate namespace:\noc get proxy cluster -o yaml\nConfirm with the platform team before proceeding if either applies.",
+    "crumbs": [
+      "Implementation",
+      "Validate the OCP Cluster"
+    ]
+  },
+  {
+    "objectID": "src/implementation_methodology/validate.html#namespace-and-rbac",
+    "href": "src/implementation_methodology/validate.html#namespace-and-rbac",
+    "title": "Validate the OCP Cluster",
+    "section": "6. Namespace and RBAC",
+    "text": "6. Namespace and RBAC\n\n6a. Create the target namespace\nIf you have not already created the namespace for the storage benchmark above, create it now:\noc new-project &lt;TARGET_NAMESPACE&gt;\nIf the namespace was pre-created by the platform team, verify you can access it:\noc get namespace &lt;TARGET_NAMESPACE&gt;\noc project &lt;TARGET_NAMESPACE&gt;\n\n\n6b. Confirm your user has sufficient rights\nConcert Operate installation requires cluster-admin or an equivalent role that can create CRDs and cluster-scoped resources. Check your current user:\noc auth can-i '*' '*'\nIf this returns yes, you have cluster-admin. If it returns no, check what cluster roles are bound to your user:\noc get clusterrolebindings -o wide | grep $(oc whoami)\nThe install role must cover CRD creation, OperatorGroup and Subscription creation, and namespace-scoped resource management. If the role is unclear, confirm with the platform team before starting the installation.",
+    "crumbs": [
+      "Implementation",
+      "Validate the OCP Cluster"
+    ]
+  },
+  {
+    "objectID": "src/implementation_methodology/validate.html#run-the-aiopsctl-precheck",
+    "href": "src/implementation_methodology/validate.html#run-the-aiopsctl-precheck",
+    "title": "Validate the OCP Cluster",
+    "section": "7. Run the aiopsctl Precheck",
+    "text": "7. Run the aiopsctl Precheck\nRun the built-in precheck to validate OCP version, hardware, and storage in one pass. At this stage, before cert-manager is installed, one check is expected to fail.\naiopsctl server precheck -n &lt;TARGET_NAMESPACE&gt;\nExpected results on a fresh cluster:\n\n\n\n\n\n\n\n\nCheck\nExpected result\nNotes\n\n\n\n\nMeets OCP Version Requirement\nPassed\nMust pass\n\n\nMeets Hardware Requirements\nPassed\nMust pass\n\n\nNo Storage Issues\nPassed\nMust pass\n\n\nCertificates Valid\nPassed\nMust pass\n\n\nCert Mgr Operator Exists\nFailed\nExpected at this stage; cert-manager is installed during the install step\n\n\n\nIf any check other than Cert Mgr Operator Exists fails, resolve it before proceeding to installation. A Cert Mgr Operator Exists failure here is normal and does not block you.",
+    "crumbs": [
+      "Implementation",
+      "Validate the OCP Cluster"
+    ]
+  },
+  {
+    "objectID": "src/implementation_methodology/validate.html#what-to-do-with-your-results",
+    "href": "src/implementation_methodology/validate.html#what-to-do-with-your-results",
+    "title": "Validate the OCP Cluster",
+    "section": "What to do with your results",
+    "text": "What to do with your results\nAt this point you have run all pre-installation checks. Two types of findings are possible.\nHard blockers (resolve before installing):\n\nOCP version outside v4.16–v4.21\nNon-x86_64 architecture on any node\nWorker node count or aggregate vCPU / RAM below minimums\nStorageClass not XFS, allowVolumeExpansion: false, or PVC smoke test fails\nStorage benchmark IOPS or bandwidth below threshold\nRegistry unreachable from cluster nodes\nCurrent user lacks sufficient RBAC to install\nAny precheck result other than Cert Mgr Operator Exists fails\n\nExpected at this stage (not blockers):\n\nCert Mgr Operator Exists fails in the precheck (cert-manager gets installed during the install step)\nLatency benchmark warnings from network-attached storage (note them; raise with storage team if above 2x the threshold)\n\nWhen all hard blockers are resolved, proceed to Install Concert Operate.",
+    "crumbs": [
+      "Implementation",
+      "Validate the OCP Cluster"
+    ]
   },
   {
     "objectID": "src/implementation_methodology/install.html",
@@ -110,6 +192,34 @@
     "crumbs": [
       "Implementation",
       "Install Concert Operate"
+    ]
+  },
+  {
+    "objectID": "src/landing_page/landing_page.html",
+    "href": "src/landing_page/landing_page.html",
+    "title": "Project Name",
+    "section": "",
+    "text": "Project Name\nSubtitle\n\n\nOur Documentation \n\n\n\n\n\nNext Steps\n\n\n\nL ink 1\n\n\n\nLink 2"
+  },
+  {
+    "objectID": "src/key-takeaway.html",
+    "href": "src/key-takeaway.html",
+    "title": "Key Takeaways",
+    "section": "",
+    "text": "Best Practices",
+    "crumbs": [
+      "Key Takeaways"
+    ]
+  },
+  {
+    "objectID": "src/implementation_methodology/configure.html",
+    "href": "src/implementation_methodology/configure.html",
+    "title": "Configure Concert Operate",
+    "section": "",
+    "text": "Configure Concert Operate: The How\nThis page covers the post-install configuration of Concert Operate: setting up event ingestion, defining correlation policies, and configuring the ITSM integration. At the end of this step, Concert Operate should be receiving events and applying correlation rules.\n\nPrerequisites\n\nConcert Operate installed and running (see Install Concert Operate)\nEvent source system accessible and able to reach the Concert Operate ingestion endpoint\nServiceNow Event Management target available\n\n\n\nProcedure\n\n\n\n\n\n\n\n\nVerification",
+    "crumbs": [
+      "Implementation",
+      "Configure Concert Operate"
     ]
   },
   {

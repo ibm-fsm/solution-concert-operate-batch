@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Validate the OCP Cluster – Concert Operate for Batch Processing</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../src/implementation_methodology/install.html" rel="next">
+<link href="../../src/solution_overview/troubleshooting.html" rel="prev">
+<link href="../../images/bee.png" rel="icon" type="image/png">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-a8cecc185c3cc386e792a2d501f72a50.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": true,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "Search",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../../images/IBMlogo.png" alt="" class="navbar-logo light-content">
+    <img src="../../images/IBMlogo.png" alt="" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Concert Operate for Batch Processing</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/ibm-fsm/solution-concert-operate-batch" target="_blank"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-bi-linkedin" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+      <i class="bi bi-linkedin" role="img">
+</i> 
+ <span class="menu-text"></span>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="nav-menu-bi-linkedin">    
+        <li>
+    <a class="dropdown-item" href="http://linkedin.com/post" target="_blank">
+ <span class="dropdown-text">Share on your LinkedIn</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="https://www.linkedin.com/company/ibm/" target="_blank">
+ <span class="dropdown-text">IBM LinkedIn</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../src/implementation_methodology/validate.html">Implementation</a></li><li class="breadcrumb-item"><a href="../../src/implementation_methodology/validate.html">Validate the OCP Cluster</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Problem Definition</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
+ <span class="menu-text">Solution Overview</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../src/solution_overview/prepare.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Prepare</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../src/solution_overview/environment.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Environment</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../src/solution_overview/troubleshooting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Troubleshooting</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Implementation</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../src/implementation_methodology/validate.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Validate the OCP Cluster</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../src/implementation_methodology/install.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Install Concert Operate</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../src/implementation_methodology/configure.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Configure Concert Operate</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../src/key-takeaway.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Key Takeaways</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#prerequisites" id="toc-prerequisites" class="nav-link active" data-scroll-target="#prerequisites">Prerequisites</a>
+  <ul class="collapse">
+  <li><a href="#install-aiopsctl" id="toc-install-aiopsctl" class="nav-link" data-scroll-target="#install-aiopsctl">Install <code>aiopsctl</code></a></li>
+  </ul></li>
+  <li><a href="#ocp-version-and-architecture" id="toc-ocp-version-and-architecture" class="nav-link" data-scroll-target="#ocp-version-and-architecture">1. OCP Version and Architecture</a></li>
+  <li><a href="#compute-worker-nodes" id="toc-compute-worker-nodes" class="nav-link" data-scroll-target="#compute-worker-nodes">2. Compute: Worker Nodes</a></li>
+  <li><a href="#storage-storageclass" id="toc-storage-storageclass" class="nav-link" data-scroll-target="#storage-storageclass">3. Storage: StorageClass</a>
+  <ul class="collapse">
+  <li><a href="#a.-identify-the-storageclass-to-use" id="toc-a.-identify-the-storageclass-to-use" class="nav-link" data-scroll-target="#a.-identify-the-storageclass-to-use">3a. Identify the StorageClass to use</a></li>
+  <li><a href="#b.-verify-filesystem-type-is-xfs" id="toc-b.-verify-filesystem-type-is-xfs" class="nav-link" data-scroll-target="#b.-verify-filesystem-type-is-xfs">3b. Verify filesystem type is XFS</a></li>
+  <li><a href="#c.-verify-allowvolumeexpansion-true" id="toc-c.-verify-allowvolumeexpansion-true" class="nav-link" data-scroll-target="#c.-verify-allowvolumeexpansion-true">3c. Verify <code>allowVolumeExpansion: true</code></a></li>
+  <li><a href="#d.-check-volumebindingmode" id="toc-d.-check-volumebindingmode" class="nav-link" data-scroll-target="#d.-check-volumebindingmode">3d. Check <code>volumeBindingMode</code></a></li>
+  <li><a href="#e.-pvc-smoke-test" id="toc-e.-pvc-smoke-test" class="nav-link" data-scroll-target="#e.-pvc-smoke-test">3e. PVC smoke test</a></li>
+  </ul></li>
+  <li><a href="#storage-capacity-and-performance" id="toc-storage-capacity-and-performance" class="nav-link" data-scroll-target="#storage-capacity-and-performance">4. Storage: Capacity and Performance</a>
+  <ul class="collapse">
+  <li><a href="#a.-total-pvc-capacity" id="toc-a.-total-pvc-capacity" class="nav-link" data-scroll-target="#a.-total-pvc-capacity">4a. Total PVC capacity</a></li>
+  <li><a href="#b.-iops-benchmark-with-aiopsctl" id="toc-b.-iops-benchmark-with-aiopsctl" class="nav-link" data-scroll-target="#b.-iops-benchmark-with-aiopsctl">4b. IOPS: benchmark with <code>aiopsctl</code></a></li>
+  </ul></li>
+  <li><a href="#network" id="toc-network" class="nav-link" data-scroll-target="#network">5. Network</a>
+  <ul class="collapse">
+  <li><a href="#a.-cluster-egress-to-the-private-container-registry" id="toc-a.-cluster-egress-to-the-private-container-registry" class="nav-link" data-scroll-target="#a.-cluster-egress-to-the-private-container-registry">5a. Cluster egress to the private container registry</a></li>
+  <li><a href="#b.-networkpolicy-defaults" id="toc-b.-networkpolicy-defaults" class="nav-link" data-scroll-target="#b.-networkpolicy-defaults">5b. NetworkPolicy defaults</a></li>
+  </ul></li>
+  <li><a href="#namespace-and-rbac" id="toc-namespace-and-rbac" class="nav-link" data-scroll-target="#namespace-and-rbac">6. Namespace and RBAC</a>
+  <ul class="collapse">
+  <li><a href="#a.-create-the-target-namespace" id="toc-a.-create-the-target-namespace" class="nav-link" data-scroll-target="#a.-create-the-target-namespace">6a. Create the target namespace</a></li>
+  <li><a href="#b.-confirm-your-user-has-sufficient-rights" id="toc-b.-confirm-your-user-has-sufficient-rights" class="nav-link" data-scroll-target="#b.-confirm-your-user-has-sufficient-rights">6b. Confirm your user has sufficient rights</a></li>
+  </ul></li>
+  <li><a href="#run-the-aiopsctl-precheck" id="toc-run-the-aiopsctl-precheck" class="nav-link" data-scroll-target="#run-the-aiopsctl-precheck">7. Run the <code>aiopsctl</code> Precheck</a></li>
+  <li><a href="#what-to-do-with-your-results" id="toc-what-to-do-with-your-results" class="nav-link" data-scroll-target="#what-to-do-with-your-results">What to do with your results</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../src/implementation_methodology/validate.html">Implementation</a></li><li class="breadcrumb-item"><a href="../../src/implementation_methodology/validate.html">Validate the OCP Cluster</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">Validate the OCP Cluster</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Run these checks before deploying Concert Operate. They catch environment blockers early and avoid a failed or incomplete installation. At the end of this step you will have a confirmed go / no-go for the cluster.</p>
+<p>These checks apply to a Concert Operate v5.1.0 production base deployment on a self-hosted OpenShift Container Platform (OCP) cluster. Hardware requirements are sourced from the IBM Concert Operate v5.1.0 documentation (Table 4: Concert Operate + OpenShift, new cluster, production base, without Hybrid storage).</p>
+<section id="prerequisites" class="level2">
+<h2 class="anchored" data-anchor-id="prerequisites">Prerequisites</h2>
+<ul>
+<li><code>oc</code> CLI installed and authenticated (<code>oc login</code> confirmed)</li>
+<li><code>aiopsctl</code> v5.1.0 installed (required for storage benchmark and precheck; see Install section below)</li>
+<li>Cluster-admin or equivalent read access to inspect nodes, storage, and network resources</li>
+<li>Namespace creation rights (or a pre-created target namespace)</li>
+<li>Contact established with the platform / storage team for items that cannot be confirmed from the CLI alone (StorageClass filesystem type, NetworkPolicy defaults)</li>
+</ul>
+<section id="install-aiopsctl" class="level3">
+<h3 class="anchored" data-anchor-id="install-aiopsctl">Install <code>aiopsctl</code></h3>
+<p>Download the binary for your platform and put it on your PATH. Use the version-pinned URL to ensure you have v5.1.0.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Replace the filename with your platform:</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># aiopsctl-linux_amd64.tar.gz  |  aiopsctl-linux_arm64.tar.gz</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># aiopsctl-darwin_amd64.tar.gz |  aiopsctl-darwin_arm64.tar.gz</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Windows: run from a WSL terminal using the linux_amd64 binary</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="va">AIOPSCTL_TAR</span><span class="op">=</span>aiopsctl-linux_amd64.tar.gz</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-LO</span> <span class="st">"https://github.com/IBM/aiopsctl/releases/download/v5.1.0/</span><span class="va">${AIOPSCTL_TAR}</span><span class="st">"</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">tar</span> xf <span class="st">"</span><span class="va">${AIOPSCTL_TAR}</span><span class="st">"</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">mv</span> aiopsctl /usr/local/bin/aiopsctl</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="ex">aiopsctl</span> version   <span class="co"># expected: v5.1.0</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<hr>
+</section>
+</section>
+<section id="ocp-version-and-architecture" class="level2">
+<h2 class="anchored" data-anchor-id="ocp-version-and-architecture">1. OCP Version and Architecture</h2>
+<p>Concert Operate v5.1.0 supports <strong>OCP v4.16 through v4.21</strong> on <strong>x86_64 only</strong>. ARM and ppc64le architectures are not supported.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">oc</span> version</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Expected output (example):</p>
+<pre><code>Client Version: 4.18.x
+Server Version: 4.18.x
+Kubernetes Version: v1.31.x</code></pre>
+<p>For architecture, check the <code>KERNEL-VERSION</code> column of <code>oc get nodes -o wide</code>. On x86_64 nodes the kernel version ends in <code>.x86_64</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">oc</span> get nodes <span class="at">-o</span> wide</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Expected <code>KERNEL-VERSION</code> value (example):</p>
+<pre><code>5.14.0-427.130.1.el9_4.x86_64</code></pre>
+<p>All nodes must show <code>.x86_64</code> in their kernel version. Any other suffix (<code>.aarch64</code>, <code>.s390x</code>) means the architecture requirement is not met.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Check</th>
+<th>Command</th>
+<th>What to look for</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>OCP version in range</td>
+<td><code>oc version</code></td>
+<td>Server Version: 4.16.x – 4.21.x</td>
+</tr>
+<tr class="even">
+<td>Node architecture</td>
+<td><code>oc get nodes -o wide</code></td>
+<td>All nodes: <code>KERNEL-VERSION</code> ends in <code>.x86_64</code></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="compute-worker-nodes" class="level2">
+<h2 class="anchored" data-anchor-id="compute-worker-nodes">2. Compute: Worker Nodes</h2>
+<p>The production base profile requires a minimum of <strong>6 worker nodes</strong>. Per-node minimums are <strong>16 vCPU</strong> and <strong>20 GB RAM</strong>. The cluster as a whole must satisfy the aggregate totals: 158 vCPU and 384 GB RAM across all workers. If nodes are provisioned below the per-node minimums, additional nodes are required to reach those totals.</p>
+<p><strong>Count worker nodes:</strong></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">oc</span> get nodes <span class="at">--selector</span><span class="op">=</span><span class="st">'node-role.kubernetes.io/worker'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Capacity and Allocatable for all workers at once:</strong></p>
+<p><code>oc describe node</code> is verbose. Use <code>jsonpath</code> to pull just the numbers you need across all worker nodes in one pass:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> node <span class="kw">in</span> <span class="va">$(</span><span class="ex">oc</span> get nodes <span class="at">--selector</span><span class="op">=</span><span class="st">'node-role.kubernetes.io/worker'</span> <span class="at">-o</span> name<span class="va">)</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">"--- </span><span class="va">${node}</span><span class="st"> ---"</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="ex">oc</span> get <span class="va">${node}</span> <span class="at">-o</span> jsonpath=<span class="dt">\</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="st">'CPU capacity: {.status.capacity.cpu}{"\n"}'</span><span class="dt">\</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="st">'CPU allocatable: {.status.allocatable.cpu}{"\n"}'</span><span class="dt">\</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="st">'Memory capacity (GiB): {.status.capacity.memory}{"\n"}'</span><span class="dt">\</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="st">'Memory allocatable (GiB): {.status.allocatable.memory}{"\n"}'</span><span class="dt">\</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="st">'Ephemeral storage capacity (GiB): {.status.capacity.ephemeral-storage}{"\n"}'</span><span class="dt">\</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="st">'Ephemeral storage allocatable (GiB): {.status.allocatable.ephemeral-storage}{"\n"}'</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Memory and storage values are returned in <code>Ki</code> (kibibytes). Divide by 1,048,576 to convert to GiB, or use <code>oc adm top nodes</code> for a live utilization view in human-readable units:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">oc</span> adm top nodes <span class="at">--selector</span><span class="op">=</span><span class="st">'node-role.kubernetes.io/worker'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Aggregate capacity across all nodes (one line per node):</strong></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ex">oc</span> get nodes <span class="at">-o</span><span class="op">=</span>custom-columns=<span class="dt">\</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="st">'NAME:.metadata.name,'</span><span class="dt">\</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="st">'CPU:.status.capacity.cpu,'</span><span class="dt">\</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="st">'MEMORY_Ki:.status.capacity.memory,'</span><span class="dt">\</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="st">'STORAGE_Ki:.status.capacity.ephemeral-storage'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Raw Ki values are expected here. For a node showing <code>131856920Ki</code> memory, that is approximately 125 GiB (131,856,920 / 1,048,576). Multiply the per-node GiB by the worker count to confirm the cluster total meets 384 GB.</p>
+<p>Allocatable is capacity minus OS and kubelet overhead. It is the figure that matters for scheduling.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Check</th>
+<th>Per-node minimum</th>
+<th>Aggregate target</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Worker node count</td>
+<td>n/a</td>
+<td>≥ 6 nodes</td>
+</tr>
+<tr class="even">
+<td>vCPU per worker</td>
+<td>≥ 16 vCPU</td>
+<td>158 vCPU total</td>
+</tr>
+<tr class="odd">
+<td>RAM per worker</td>
+<td>≥ 20 GB</td>
+<td>384 GB total</td>
+</tr>
+<tr class="even">
+<td>Ephemeral storage per worker</td>
+<td>≥ 120 GB</td>
+<td>n/a</td>
+</tr>
+<tr class="odd">
+<td>Control plane nodes</td>
+<td>n/a</td>
+<td>3 nodes</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="storage-storageclass" class="level2">
+<h2 class="anchored" data-anchor-id="storage-storageclass">3. Storage: StorageClass</h2>
+<p>Storage class configuration <strong>cannot be changed after installation</strong>. Get this right before proceeding.</p>
+<section id="a.-identify-the-storageclass-to-use" class="level3">
+<h3 class="anchored" data-anchor-id="a.-identify-the-storageclass-to-use">3a. Identify the StorageClass to use</h3>
+<p>Start by listing all available StorageClasses:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">oc</span> get sc</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Example output:</p>
+<pre><code>NAME                          PROVISIONER                    RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION
+ocs-storagecluster-ceph-rbd   openshift-storage.rbd.csi...   Delete          Immediate              true
+ocs-storagecluster-cephfs     openshift-storage.cephfs...    Delete          Immediate              true</code></pre>
+<p>The StorageClass for Concert Operate must be a <strong>block (RWO)</strong> class backed by a CSI driver. Look for classes provisioned by a block CSI driver (<code>rbd</code>, <code>nutanix</code>, <code>portworx</code>, <code>gp3</code>, etc.). CephFS and NFS classes provision filesystem (RWX) volumes; those are not the right choice for the primary Concert Operate storage class.</p>
+<p>If multiple block classes exist, confirm which one is appropriate with your platform team. Note the name; you will use it in the installation CR and in the checks below. Replace <code>&lt;storage-class-name&gt;</code> with that name throughout this section.</p>
+<p>The <code>oc get sc</code> output already shows <code>ALLOWVOLUMEEXPANSION</code> and <code>VOLUMEBINDINGMODE</code> for all classes at a glance. Use <code>oc get sc &lt;storage-class-name&gt; -o yaml</code> for full detail on a specific class.</p>
+</section>
+<section id="b.-verify-filesystem-type-is-xfs" class="level3">
+<h3 class="anchored" data-anchor-id="b.-verify-filesystem-type-is-xfs">3b. Verify filesystem type is XFS</h3>
+<p>MinIO requires XFS. An ext4 filesystem will exhaust inodes even when PVC space is available, leaving the filesystem read-only with no recovery path.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ex">oc</span> get sc <span class="op">&lt;</span>storage-class-name<span class="op">&gt;</span> -o yaml <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-E</span> <span class="st">'fsType|csi.storage.k8s.io/fstype'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Look for <code>fsType: xfs</code> or <code>csi.storage.k8s.io/fstype: xfs</code> in the parameters block. If the field is missing or set to <code>ext4</code>, the StorageClass must be reconfigured or a new XFS-configured class must be requested from the storage team before installation.</p>
+<blockquote class="blockquote">
+<p><strong>Note:</strong> Some CSI drivers (e.g.&nbsp;Nutanix CSI) default to ext4. Confirm explicitly with the platform team. Do not assume the default is XFS.</p>
+</blockquote>
+</section>
+<section id="c.-verify-allowvolumeexpansion-true" class="level3">
+<h3 class="anchored" data-anchor-id="c.-verify-allowvolumeexpansion-true">3c. Verify <code>allowVolumeExpansion: true</code></h3>
+<p>Required for runtime PVC resizing without downtime:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="ex">oc</span> get sc <span class="op">&lt;</span>storage-class-name<span class="op">&gt;</span> -o yaml <span class="kw">|</span> <span class="fu">grep</span> allowVolumeExpansion</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Must return <code>allowVolumeExpansion: true</code>. If it returns <code>false</code> or is absent, ask the platform team to enable it on the StorageClass before installation.</p>
+</section>
+<section id="d.-check-volumebindingmode" class="level3">
+<h3 class="anchored" data-anchor-id="d.-check-volumebindingmode">3d. Check <code>volumeBindingMode</code></h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="ex">oc</span> get sc <span class="op">&lt;</span>storage-class-name<span class="op">&gt;</span> -o yaml <span class="kw">|</span> <span class="fu">grep</span> volumeBindingMode</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Either <code>Immediate</code> or <code>WaitForFirstConsumer</code> is acceptable. Confirm it is compatible with your cluster topology (single-zone vs.&nbsp;multi-zone).</p>
+</section>
+<section id="e.-pvc-smoke-test" class="level3">
+<h3 class="anchored" data-anchor-id="e.-pvc-smoke-test">3e. PVC smoke test</h3>
+<p>Create a small test PVC to confirm the StorageClass provisions and binds successfully. Replace <code>&lt;storage-class-name&gt;</code> with the confirmed class name.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">apiVersion</span><span class="kw">:</span><span class="at"> v1</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kind</span><span class="kw">:</span><span class="at"> PersistentVolumeClaim</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="fu">metadata</span><span class="kw">:</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">name</span><span class="kw">:</span><span class="at"> concert-storage-smoke-test</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> default</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="fu">spec</span><span class="kw">:</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">accessModes</span><span class="kw">:</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> ReadWriteOnce</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">storageClassName</span><span class="kw">:</span><span class="at"> &lt;storage-class-name&gt;</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">volumeMode</span><span class="kw">:</span><span class="at"> Filesystem</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">resources</span><span class="kw">:</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">requests</span><span class="kw">:</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">storage</span><span class="kw">:</span><span class="at"> 10Gi</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="ex">oc</span> apply <span class="at">-f</span> smoke-test-pvc.yaml</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="ex">oc</span> get pvc concert-storage-smoke-test   <span class="co"># expect: Bound within ~60 seconds</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="ex">oc</span> delete pvc concert-storage-smoke-test</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>If the PVC stays in <code>Pending</code>, check events for provisioning errors:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="ex">oc</span> describe pvc concert-storage-smoke-test</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<hr>
+</section>
+</section>
+<section id="storage-capacity-and-performance" class="level2">
+<h2 class="anchored" data-anchor-id="storage-capacity-and-performance">4. Storage: Capacity and Performance</h2>
+<section id="a.-total-pvc-capacity" class="level3">
+<h3 class="anchored" data-anchor-id="a.-total-pvc-capacity">4a. Total PVC capacity</h3>
+<p>The production profile requires <strong>2,627 Gi</strong> of usable PVC capacity. Check existing PV availability and confirm no pre-existing large claims will crowd out the installation:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="ex">oc</span> get pv</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="ex">oc</span> get pvc <span class="at">-A</span>   <span class="co"># check all namespaces for existing large claims</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="b.-iops-benchmark-with-aiopsctl" class="level3">
+<h3 class="anchored" data-anchor-id="b.-iops-benchmark-with-aiopsctl">4b. IOPS: benchmark with <code>aiopsctl</code></h3>
+<p>Run the built-in storage benchmark against your block StorageClass. The namespace must already exist; create it first if needed:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="ex">oc</span> new-project <span class="op">&lt;</span>TARGET_NAMESPACE<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Then run the benchmark. It takes approximately 8 minutes and will prompt for confirmation before adding load to the cluster.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="ex">aiopsctl</span> benchmark storage <span class="dt">\</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--namespace</span><span class="op">=&lt;</span>TARGET_NAMESPACE<span class="op">&gt;</span> <span class="dt">\</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--storage-class</span><span class="op">=&lt;</span>storage-class-name<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>If storage performance varies significantly by node (e.g.&nbsp;nodes have different underlying disk tiers), target a specific node:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="ex">aiopsctl</span> benchmark storage <span class="dt">\</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--namespace</span><span class="op">=&lt;</span>TARGET_NAMESPACE<span class="op">&gt;</span> <span class="dt">\</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--storage-class</span><span class="op">=&lt;</span>storage-class-name<span class="op">&gt;</span> <span class="dt">\</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--node</span><span class="op">=&lt;</span>node-name<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Example output:</p>
+<pre><code>Benchmark Results:
+Measurement                 Read                           Write
+Sequential IOPS             10831.66      ✔ (&gt; 5000 )      6665.42       ✔ (&gt; 5000 )
+Sequential Bandwidth        40.87 Mi/sec  ✔ (&gt; 20 Mi/sec)  26.08 Mi/sec  ✔ (&gt; 20 Mi/sec)
+Average-Sequential Latency  626.56 usec   ✖ (&lt; 500 usec)   1133.56 usec  ✖ (&lt; 1000 usec)
+Mixed-Sequential IOPS       2260.35                        6778.59</code></pre>
+<p>Minimum passing thresholds:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Metric</th>
+<th>Read</th>
+<th>Write</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Minimum sequential IOPS</td>
+<td>5,000</td>
+<td>5,000</td>
+</tr>
+<tr class="even">
+<td>Minimum sequential bandwidth</td>
+<td>20 MiB/s</td>
+<td>20 MiB/s</td>
+</tr>
+<tr class="odd">
+<td>Maximum average sequential latency</td>
+<td>500 µsec</td>
+<td>1,000 µsec</td>
+</tr>
+</tbody>
+</table>
+<p>IOPS and bandwidth failures are hard blockers. <strong>Latency failures are a warning.</strong> Network-attached storage often exceeds the latency thresholds under normal conditions while still being suitable for Concert Operate in practice. If latency fails, note it and raise it with the storage team, but do not halt validation solely on latency. IOPS and bandwidth must pass.</p>
+<p>These thresholds do not apply to native public cloud storage (Amazon EBS, IBM Cloud Block Storage).</p>
+<hr>
+</section>
+</section>
+<section id="network" class="level2">
+<h2 class="anchored" data-anchor-id="network">5. Network</h2>
+<section id="a.-cluster-egress-to-the-private-container-registry" class="level3">
+<h3 class="anchored" data-anchor-id="a.-cluster-egress-to-the-private-container-registry">5a. Cluster egress to the private container registry</h3>
+<p>Confirm the cluster can reach your private registry from within the cluster nodes, not just from a workstation. Use a debug pod on a worker node:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Option 1: curl from the node host</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="ex">oc</span> debug node/<span class="op">&lt;</span>worker-node-name<span class="op">&gt;</span> -- chroot /host <span class="dt">\</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  curl <span class="at">-s</span> <span class="at">-o</span> /dev/null <span class="at">-w</span> <span class="st">"%{http_code}"</span> https://<span class="op">&lt;</span>REGISTRY_HOST<span class="op">&gt;</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected: 200 or 401 (auth challenge means network is reachable)</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Option 2: pull a known image via crictl</span></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a><span class="ex">oc</span> debug node/<span class="op">&lt;</span>worker-node-name<span class="op">&gt;</span> -- chroot /host <span class="dt">\</span></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>  crictl pull <span class="op">&lt;</span>REGISTRY_HOST<span class="op">&gt;</span>/cpopen/<span class="op">&lt;</span>any-image<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Replace <code>&lt;REGISTRY_HOST&gt;</code> with your private registry hostname (Artifactory or equivalent).</p>
+<p>The following IBM image source paths must be reachable through the registry proxy:</p>
+<ul>
+<li><code>icr.io/cpopen</code></li>
+<li><code>icr.io/cpopen/cpfs</code></li>
+<li><code>cp.icr.io/cp</code></li>
+<li><code>cp.icr.io/cp/cp4waiops</code></li>
+</ul>
+</section>
+<section id="b.-networkpolicy-defaults" class="level3">
+<h3 class="anchored" data-anchor-id="b.-networkpolicy-defaults">5b. NetworkPolicy defaults</h3>
+<p>Check whether the cluster applies default-deny NetworkPolicies to new namespaces:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="ex">oc</span> get networkpolicy <span class="at">-A</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>If default-deny policies are in place, add explicit allow rules for the Concert Operate namespace before installation. Check also for any proxy configuration that may need <code>noProxy</code> entries for the registry hostname or the Concert Operate namespace:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="ex">oc</span> get proxy cluster <span class="at">-o</span> yaml</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Confirm with the platform team before proceeding if either applies.</p>
+<hr>
+</section>
+</section>
+<section id="namespace-and-rbac" class="level2">
+<h2 class="anchored" data-anchor-id="namespace-and-rbac">6. Namespace and RBAC</h2>
+<section id="a.-create-the-target-namespace" class="level3">
+<h3 class="anchored" data-anchor-id="a.-create-the-target-namespace">6a. Create the target namespace</h3>
+<p>If you have not already created the namespace for the storage benchmark above, create it now:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="ex">oc</span> new-project <span class="op">&lt;</span>TARGET_NAMESPACE<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>If the namespace was pre-created by the platform team, verify you can access it:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="ex">oc</span> get namespace <span class="op">&lt;</span>TARGET_NAMESPACE<span class="op">&gt;</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="ex">oc</span> project <span class="op">&lt;</span>TARGET_NAMESPACE<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="b.-confirm-your-user-has-sufficient-rights" class="level3">
+<h3 class="anchored" data-anchor-id="b.-confirm-your-user-has-sufficient-rights">6b. Confirm your user has sufficient rights</h3>
+<p>Concert Operate installation requires cluster-admin or an equivalent role that can create CRDs and cluster-scoped resources. Check your current user:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="ex">oc</span> auth can-i <span class="st">'*'</span> <span class="st">'*'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>If this returns <code>yes</code>, you have cluster-admin. If it returns <code>no</code>, check what cluster roles are bound to your user:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="ex">oc</span> get clusterrolebindings <span class="at">-o</span> wide <span class="kw">|</span> <span class="fu">grep</span> <span class="va">$(</span><span class="ex">oc</span> whoami<span class="va">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The install role must cover CRD creation, OperatorGroup and Subscription creation, and namespace-scoped resource management. If the role is unclear, confirm with the platform team before starting the installation.</p>
+<hr>
+</section>
+</section>
+<section id="run-the-aiopsctl-precheck" class="level2">
+<h2 class="anchored" data-anchor-id="run-the-aiopsctl-precheck">7. Run the <code>aiopsctl</code> Precheck</h2>
+<p>Run the built-in precheck to validate OCP version, hardware, and storage in one pass. At this stage, before cert-manager is installed, one check is expected to fail.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="ex">aiopsctl</span> server precheck <span class="at">-n</span> <span class="op">&lt;</span>TARGET_NAMESPACE<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Expected results on a fresh cluster:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Check</th>
+<th>Expected result</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Meets OCP Version Requirement</td>
+<td>Passed</td>
+<td>Must pass</td>
+</tr>
+<tr class="even">
+<td>Meets Hardware Requirements</td>
+<td>Passed</td>
+<td>Must pass</td>
+</tr>
+<tr class="odd">
+<td>No Storage Issues</td>
+<td>Passed</td>
+<td>Must pass</td>
+</tr>
+<tr class="even">
+<td>Certificates Valid</td>
+<td>Passed</td>
+<td>Must pass</td>
+</tr>
+<tr class="odd">
+<td>Cert Mgr Operator Exists</td>
+<td><strong>Failed</strong></td>
+<td>Expected at this stage; cert-manager is installed during the install step</td>
+</tr>
+</tbody>
+</table>
+<p>If any check other than <code>Cert Mgr Operator Exists</code> fails, resolve it before proceeding to installation. A <code>Cert Mgr Operator Exists</code> failure here is normal and does not block you.</p>
+<hr>
+</section>
+<section id="what-to-do-with-your-results" class="level2">
+<h2 class="anchored" data-anchor-id="what-to-do-with-your-results">What to do with your results</h2>
+<p>At this point you have run all pre-installation checks. Two types of findings are possible.</p>
+<p><strong>Hard blockers (resolve before installing):</strong></p>
+<ul>
+<li>OCP version outside v4.16–v4.21</li>
+<li>Non-x86_64 architecture on any node</li>
+<li>Worker node count or aggregate vCPU / RAM below minimums</li>
+<li>StorageClass not XFS, <code>allowVolumeExpansion: false</code>, or PVC smoke test fails</li>
+<li>Storage benchmark IOPS or bandwidth below threshold</li>
+<li>Registry unreachable from cluster nodes</li>
+<li>Current user lacks sufficient RBAC to install</li>
+<li>Any precheck result other than <code>Cert Mgr Operator Exists</code> fails</li>
+</ul>
+<p><strong>Expected at this stage (not blockers):</strong></p>
+<ul>
+<li><code>Cert Mgr Operator Exists</code> fails in the precheck (cert-manager gets installed during the install step)</li>
+<li>Latency benchmark warnings from network-attached storage (note them; raise with storage team if above 2x the threshold)</li>
+</ul>
+<p>When all hard blockers are resolved, proceed to <a href="../../src/implementation_methodology/install.html">Install Concert Operate</a>.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/ibm-fsm\.github\.io\/solution-concert-operate-batch\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../../src/solution_overview/troubleshooting.html" class="pagination-link" aria-label="Troubleshooting">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Troubleshooting</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../../src/implementation_methodology/install.html" class="pagination-link" aria-label="Install Concert Operate">
+        <span class="nav-page-text">Install Concert Operate</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<div class="listitem">
+<a href="https://ibm.com" rel="noopener noreferrer" class="footerLogo"><img src="https://www.ibm.com/brand/experience-guides/developer/8f4e3cc2b5d52354a6d43c8edba1e3c9/02_8-bar-reverse.svg" alt="IBM Logo" class="footer__logo themedComponent_node_modules-@docusaurus-theme-common-lib-components-ThemedComponent-styles-module themedComponent--light_node_modules-@docusaurus-theme-common-lib-components-ThemedComponent-styles-module" width="250" height="250"></a>
+</div>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    </div>
+    <div class="nav-footer-right">
+      &nbsp;
+    </div>
+  </div>
+</footer>
+
+
+
+
+</body></html>

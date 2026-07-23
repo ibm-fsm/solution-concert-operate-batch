@@ -2,34 +2,38 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://ibm-fsm.github.io/solution-concert-operate-batch/index.html</loc>
-    <lastmod>2026-07-22T21:02:14.958Z</lastmod>
+    <lastmod>2026-07-23T17:16:56.554Z</lastmod>
   </url>
   <url>
     <loc>https://ibm-fsm.github.io/solution-concert-operate-batch/src/solution_overview/prepare.html</loc>
-    <lastmod>2026-07-22T21:02:14.959Z</lastmod>
+    <lastmod>2026-07-23T17:16:56.555Z</lastmod>
   </url>
   <url>
-    <loc>https://ibm-fsm.github.io/solution-concert-operate-batch/src/implementation_methodology/configure.html</loc>
-    <lastmod>2026-07-22T21:02:14.958Z</lastmod>
-  </url>
-  <url>
-    <loc>https://ibm-fsm.github.io/solution-concert-operate-batch/src/key-takeaway.html</loc>
-    <lastmod>2026-07-22T21:02:14.958Z</lastmod>
-  </url>
-  <url>
-    <loc>https://ibm-fsm.github.io/solution-concert-operate-batch/src/landing_page/landing_page.html</loc>
-    <lastmod>2026-07-22T21:02:14.958Z</lastmod>
+    <loc>https://ibm-fsm.github.io/solution-concert-operate-batch/src/implementation_methodology/validate.html</loc>
+    <lastmod>2026-07-23T17:16:56.554Z</lastmod>
   </url>
   <url>
     <loc>https://ibm-fsm.github.io/solution-concert-operate-batch/src/implementation_methodology/install.html</loc>
-    <lastmod>2026-07-22T21:02:14.958Z</lastmod>
+    <lastmod>2026-07-23T17:16:56.554Z</lastmod>
+  </url>
+  <url>
+    <loc>https://ibm-fsm.github.io/solution-concert-operate-batch/src/landing_page/landing_page.html</loc>
+    <lastmod>2026-07-23T17:16:56.554Z</lastmod>
+  </url>
+  <url>
+    <loc>https://ibm-fsm.github.io/solution-concert-operate-batch/src/key-takeaway.html</loc>
+    <lastmod>2026-07-23T17:16:56.554Z</lastmod>
+  </url>
+  <url>
+    <loc>https://ibm-fsm.github.io/solution-concert-operate-batch/src/implementation_methodology/configure.html</loc>
+    <lastmod>2026-07-23T17:16:56.554Z</lastmod>
   </url>
   <url>
     <loc>https://ibm-fsm.github.io/solution-concert-operate-batch/src/solution_overview/troubleshooting.html</loc>
-    <lastmod>2026-07-22T21:02:14.959Z</lastmod>
+    <lastmod>2026-07-23T17:16:56.555Z</lastmod>
   </url>
   <url>
     <loc>https://ibm-fsm.github.io/solution-concert-operate-batch/src/solution_overview/environment.html</loc>
-    <lastmod>2026-07-22T21:02:14.959Z</lastmod>
+    <lastmod>2026-07-23T17:16:56.555Z</lastmod>
   </url>
 </urlset>
