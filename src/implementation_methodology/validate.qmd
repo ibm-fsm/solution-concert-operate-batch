@@ -1,0 +1,454 @@
+---
+title: "Validate the OCP Cluster"
+format: html
+---
+
+Run these checks before deploying Concert Operate. They catch environment blockers early
+and avoid a failed or incomplete installation. At the end of this step you will have a
+confirmed go / no-go for the cluster.
+
+These checks apply to a Concert Operate v5.1.0 production base deployment on a
+self-hosted OpenShift Container Platform (OCP) cluster. Hardware requirements are sourced
+from the IBM Concert Operate v5.1.0 documentation (Table 4: Concert Operate + OpenShift,
+new cluster, production base, without Hybrid storage).
+
+## Prerequisites
+
+- `oc` CLI installed and authenticated (`oc login` confirmed)
+- `aiopsctl` v5.1.0 installed (required for storage benchmark and precheck; see Install section below)
+- Cluster-admin or equivalent read access to inspect nodes, storage, and network resources
+- Namespace creation rights (or a pre-created target namespace)
+- Contact established with the platform / storage team for items that cannot be confirmed
+  from the CLI alone (StorageClass filesystem type, NetworkPolicy defaults)
+
+### Install `aiopsctl`
+
+Download the binary for your platform and put it on your PATH. Use the version-pinned URL
+to ensure you have v5.1.0.
+
+```bash
+# Replace the filename with your platform:
+# aiopsctl-linux_amd64.tar.gz  |  aiopsctl-linux_arm64.tar.gz
+# aiopsctl-darwin_amd64.tar.gz |  aiopsctl-darwin_arm64.tar.gz
+# Windows: run from a WSL terminal using the linux_amd64 binary
+
+AIOPSCTL_TAR=aiopsctl-linux_amd64.tar.gz
+curl -LO "https://github.com/IBM/aiopsctl/releases/download/v5.1.0/${AIOPSCTL_TAR}"
+tar xf "${AIOPSCTL_TAR}"
+mv aiopsctl /usr/local/bin/aiopsctl
+aiopsctl version   # expected: v5.1.0
+```
+
+---
+
+## 1. OCP Version and Architecture
+
+Concert Operate v5.1.0 supports **OCP v4.16 through v4.21** on **x86\_64 only**. ARM and
+ppc64le architectures are not supported.
+
+```bash
+oc version
+```
+
+Expected output (example):
+
+```
+Client Version: 4.18.x
+Server Version: 4.18.x
+Kubernetes Version: v1.31.x
+```
+
+For architecture, check the `KERNEL-VERSION` column of `oc get nodes -o wide`. On x86\_64
+nodes the kernel version ends in `.x86_64`:
+
+```bash
+oc get nodes -o wide
+```
+
+Expected `KERNEL-VERSION` value (example):
+
+```
+5.14.0-427.130.1.el9_4.x86_64
+```
+
+All nodes must show `.x86_64` in their kernel version. Any other suffix (`.aarch64`,
+`.s390x`) means the architecture requirement is not met.
+
+| Check | Command | What to look for |
+|---|---|---|
+| OCP version in range | `oc version` | Server Version: 4.16.x – 4.21.x |
+| Node architecture | `oc get nodes -o wide` | All nodes: `KERNEL-VERSION` ends in `.x86_64` |
+
+---
+
+## 2. Compute: Worker Nodes
+
+The production base profile requires a minimum of **6 worker nodes**. Per-node minimums are
+**16 vCPU** and **20 GB RAM**. The cluster as a whole must satisfy the aggregate totals:
+158 vCPU and 384 GB RAM across all workers. If nodes are provisioned below the per-node
+minimums, additional nodes are required to reach those totals.
+
+**Count worker nodes:**
+
+```bash
+oc get nodes --selector='node-role.kubernetes.io/worker'
+```
+
+**Capacity and Allocatable for all workers at once:**
+
+`oc describe node` is verbose. Use `jsonpath` to pull just the numbers you need across all
+worker nodes in one pass:
+
+```bash
+for node in $(oc get nodes --selector='node-role.kubernetes.io/worker' -o name); do
+  echo "--- ${node} ---"
+  oc get ${node} -o jsonpath=\
+'CPU capacity: {.status.capacity.cpu}{"\n"}'\
+'CPU allocatable: {.status.allocatable.cpu}{"\n"}'\
+'Memory capacity (GiB): {.status.capacity.memory}{"\n"}'\
+'Memory allocatable (GiB): {.status.allocatable.memory}{"\n"}'\
+'Ephemeral storage capacity (GiB): {.status.capacity.ephemeral-storage}{"\n"}'\
+'Ephemeral storage allocatable (GiB): {.status.allocatable.ephemeral-storage}{"\n"}'
+done
+```
+
+Memory and storage values are returned in `Ki` (kibibytes). Divide by 1,048,576 to convert
+to GiB, or use `oc adm top nodes` for a live utilization view in human-readable units:
+
+```bash
+oc adm top nodes --selector='node-role.kubernetes.io/worker'
+```
+
+**Aggregate capacity across all nodes (one line per node):**
+
+```bash
+oc get nodes -o=custom-columns=\
+'NAME:.metadata.name,'\
+'CPU:.status.capacity.cpu,'\
+'MEMORY_Ki:.status.capacity.memory,'\
+'STORAGE_Ki:.status.capacity.ephemeral-storage'
+```
+
+Raw Ki values are expected here. For a node showing `131856920Ki` memory, that is
+approximately 125 GiB (131,856,920 / 1,048,576). Multiply the per-node GiB by the worker
+count to confirm the cluster total meets 384 GB.
+
+Allocatable is capacity minus OS and kubelet overhead. It is the figure that matters for
+scheduling.
+
+| Check | Per-node minimum | Aggregate target |
+|---|---|---|
+| Worker node count | n/a | ≥ 6 nodes |
+| vCPU per worker | ≥ 16 vCPU | 158 vCPU total |
+| RAM per worker | ≥ 20 GB | 384 GB total |
+| Ephemeral storage per worker | ≥ 120 GB | n/a |
+| Control plane nodes | n/a | 3 nodes |
+
+---
+
+## 3. Storage: StorageClass
+
+Storage class configuration **cannot be changed after installation**. Get this right before
+proceeding.
+
+### 3a. Identify the StorageClass to use
+
+Start by listing all available StorageClasses:
+
+```bash
+oc get sc
+```
+
+Example output:
+
+```
+NAME                          PROVISIONER                    RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION
+ocs-storagecluster-ceph-rbd   openshift-storage.rbd.csi...   Delete          Immediate              true
+ocs-storagecluster-cephfs     openshift-storage.cephfs...    Delete          Immediate              true
+```
+
+The StorageClass for Concert Operate must be a **block (RWO)** class backed by a CSI driver.
+Look for classes provisioned by a block CSI driver (`rbd`, `nutanix`, `portworx`, `gp3`,
+etc.). CephFS and NFS classes provision filesystem (RWX) volumes; those are not the right
+choice for the primary Concert Operate storage class.
+
+If multiple block classes exist, confirm which one is appropriate with your platform team.
+Note the name; you will use it in the installation CR and in the checks below. Replace
+`<storage-class-name>` with that name throughout this section.
+
+The `oc get sc` output already shows `ALLOWVOLUMEEXPANSION` and `VOLUMEBINDINGMODE` for all
+classes at a glance. Use `oc get sc <storage-class-name> -o yaml` for full detail on a
+specific class.
+
+### 3b. Verify filesystem type is XFS
+
+MinIO requires XFS. An ext4 filesystem will exhaust inodes even when PVC space is available,
+leaving the filesystem read-only with no recovery path.
+
+```bash
+oc get sc <storage-class-name> -o yaml | grep -E 'fsType|csi.storage.k8s.io/fstype'
+```
+
+Look for `fsType: xfs` or `csi.storage.k8s.io/fstype: xfs` in the parameters block. If the
+field is missing or set to `ext4`, the StorageClass must be reconfigured or a new
+XFS-configured class must be requested from the storage team before installation.
+
+> **Note:** Some CSI drivers (e.g. Nutanix CSI) default to ext4. Confirm explicitly with
+> the platform team. Do not assume the default is XFS.
+
+### 3c. Verify `allowVolumeExpansion: true`
+
+Required for runtime PVC resizing without downtime:
+
+```bash
+oc get sc <storage-class-name> -o yaml | grep allowVolumeExpansion
+```
+
+Must return `allowVolumeExpansion: true`. If it returns `false` or is absent, ask the
+platform team to enable it on the StorageClass before installation.
+
+### 3d. Check `volumeBindingMode`
+
+```bash
+oc get sc <storage-class-name> -o yaml | grep volumeBindingMode
+```
+
+Either `Immediate` or `WaitForFirstConsumer` is acceptable. Confirm it is compatible with
+your cluster topology (single-zone vs. multi-zone).
+
+### 3e. PVC smoke test
+
+Create a small test PVC to confirm the StorageClass provisions and binds successfully.
+Replace `<storage-class-name>` with the confirmed class name.
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: concert-storage-smoke-test
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: <storage-class-name>
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 10Gi
+```
+
+```bash
+oc apply -f smoke-test-pvc.yaml
+oc get pvc concert-storage-smoke-test   # expect: Bound within ~60 seconds
+oc delete pvc concert-storage-smoke-test
+```
+
+If the PVC stays in `Pending`, check events for provisioning errors:
+
+```bash
+oc describe pvc concert-storage-smoke-test
+```
+
+---
+
+## 4. Storage: Capacity and Performance
+
+### 4a. Total PVC capacity
+
+The production profile requires **2,627 Gi** of usable PVC capacity. Check existing PV
+availability and confirm no pre-existing large claims will crowd out the installation:
+
+```bash
+oc get pv
+oc get pvc -A   # check all namespaces for existing large claims
+```
+
+### 4b. IOPS: benchmark with `aiopsctl`
+
+Run the built-in storage benchmark against your block StorageClass. The namespace must
+already exist; create it first if needed:
+
+```bash
+oc new-project <TARGET_NAMESPACE>
+```
+
+Then run the benchmark. It takes approximately 8 minutes and will prompt for confirmation
+before adding load to the cluster.
+
+```bash
+aiopsctl benchmark storage \
+  --namespace=<TARGET_NAMESPACE> \
+  --storage-class=<storage-class-name>
+```
+
+If storage performance varies significantly by node (e.g. nodes have different underlying
+disk tiers), target a specific node:
+
+```bash
+aiopsctl benchmark storage \
+  --namespace=<TARGET_NAMESPACE> \
+  --storage-class=<storage-class-name> \
+  --node=<node-name>
+```
+
+Example output:
+
+```
+Benchmark Results:
+Measurement                 Read                           Write
+Sequential IOPS             10831.66      ✔ (> 5000 )      6665.42       ✔ (> 5000 )
+Sequential Bandwidth        40.87 Mi/sec  ✔ (> 20 Mi/sec)  26.08 Mi/sec  ✔ (> 20 Mi/sec)
+Average-Sequential Latency  626.56 usec   ✖ (< 500 usec)   1133.56 usec  ✖ (< 1000 usec)
+Mixed-Sequential IOPS       2260.35                        6778.59
+```
+
+Minimum passing thresholds:
+
+| Metric | Read | Write |
+|---|---|---|
+| Minimum sequential IOPS | 5,000 | 5,000 |
+| Minimum sequential bandwidth | 20 MiB/s | 20 MiB/s |
+| Maximum average sequential latency | 500 µsec | 1,000 µsec |
+
+IOPS and bandwidth failures are hard blockers. **Latency failures are a warning.** Network-attached storage often exceeds the latency thresholds
+under normal conditions while still being suitable for Concert Operate in practice. If
+latency fails, note it and raise it with the storage team, but do not halt validation
+solely on latency. IOPS and bandwidth must pass.
+
+These thresholds do not apply to native public cloud storage (Amazon EBS, IBM Cloud Block
+Storage).
+
+---
+
+## 5. Network
+
+### 5a. Cluster egress to the private container registry
+
+Confirm the cluster can reach your private registry from within the cluster nodes, not just
+from a workstation. Use a debug pod on a worker node:
+
+```bash
+# Option 1: curl from the node host
+oc debug node/<worker-node-name> -- chroot /host \
+  curl -s -o /dev/null -w "%{http_code}" https://<REGISTRY_HOST>
+
+# Expected: 200 or 401 (auth challenge means network is reachable)
+
+# Option 2: pull a known image via crictl
+oc debug node/<worker-node-name> -- chroot /host \
+  crictl pull <REGISTRY_HOST>/cpopen/<any-image>
+```
+
+Replace `<REGISTRY_HOST>` with your private registry hostname (Artifactory or equivalent).
+
+The following IBM image source paths must be reachable through the registry proxy:
+
+- `icr.io/cpopen`
+- `icr.io/cpopen/cpfs`
+- `cp.icr.io/cp`
+- `cp.icr.io/cp/cp4waiops`
+
+### 5b. NetworkPolicy defaults
+
+Check whether the cluster applies default-deny NetworkPolicies to new namespaces:
+
+```bash
+oc get networkpolicy -A
+```
+
+If default-deny policies are in place, add explicit allow rules for the Concert Operate
+namespace before installation. Check also for any proxy configuration that may need
+`noProxy` entries for the registry hostname or the Concert Operate namespace:
+
+```bash
+oc get proxy cluster -o yaml
+```
+
+Confirm with the platform team before proceeding if either applies.
+
+---
+
+## 6. Namespace and RBAC
+
+### 6a. Create the target namespace
+
+If you have not already created the namespace for the storage benchmark above, create it now:
+
+```bash
+oc new-project <TARGET_NAMESPACE>
+```
+
+If the namespace was pre-created by the platform team, verify you can access it:
+
+```bash
+oc get namespace <TARGET_NAMESPACE>
+oc project <TARGET_NAMESPACE>
+```
+
+### 6b. Confirm your user has sufficient rights
+
+Concert Operate installation requires cluster-admin or an equivalent role that can create
+CRDs and cluster-scoped resources. Check your current user:
+
+```bash
+oc auth can-i '*' '*'
+```
+
+If this returns `yes`, you have cluster-admin. If it returns `no`, check what cluster roles
+are bound to your user:
+
+```bash
+oc get clusterrolebindings -o wide | grep $(oc whoami)
+```
+
+The install role must cover CRD creation, OperatorGroup and Subscription creation, and
+namespace-scoped resource management. If the role is unclear, confirm with the platform
+team before starting the installation.
+
+---
+
+## 7. Run the `aiopsctl` Precheck
+
+Run the built-in precheck to validate OCP version, hardware, and storage in one pass.
+At this stage, before cert-manager is installed, one check is expected to fail.
+
+```bash
+aiopsctl server precheck -n <TARGET_NAMESPACE>
+```
+
+Expected results on a fresh cluster:
+
+| Check | Expected result | Notes |
+|---|---|---|
+| Meets OCP Version Requirement | Passed | Must pass |
+| Meets Hardware Requirements | Passed | Must pass |
+| No Storage Issues | Passed | Must pass |
+| Certificates Valid | Passed | Must pass |
+| Cert Mgr Operator Exists | **Failed** | Expected at this stage; cert-manager is installed during the install step |
+
+If any check other than `Cert Mgr Operator Exists` fails, resolve it before proceeding to
+installation. A `Cert Mgr Operator Exists` failure here is normal and does not block you.
+
+---
+
+## What to do with your results
+
+At this point you have run all pre-installation checks. Two types of findings are possible.
+
+**Hard blockers (resolve before installing):**
+
+- OCP version outside v4.16–v4.21
+- Non-x86\_64 architecture on any node
+- Worker node count or aggregate vCPU / RAM below minimums
+- StorageClass not XFS, `allowVolumeExpansion: false`, or PVC smoke test fails
+- Storage benchmark IOPS or bandwidth below threshold
+- Registry unreachable from cluster nodes
+- Current user lacks sufficient RBAC to install
+- Any precheck result other than `Cert Mgr Operator Exists` fails
+
+**Expected at this stage (not blockers):**
+
+- `Cert Mgr Operator Exists` fails in the precheck (cert-manager gets installed during the install step)
+- Latency benchmark warnings from network-attached storage (note them; raise with storage team if above 2x the threshold)
+
+When all hard blockers are resolved, proceed to [Install Concert Operate](install.qmd).

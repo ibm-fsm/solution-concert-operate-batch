@@ -46,6 +46,8 @@ website:
             href: src/solution_overview/troubleshooting.qmd
         - section: Implementation
           contents:
+          - text: Validate the OCP Cluster
+            href: src/implementation_methodology/validate.qmd
           - text: Install Concert Operate
             href: src/implementation_methodology/install.qmd
           - text: Configure Concert Operate
